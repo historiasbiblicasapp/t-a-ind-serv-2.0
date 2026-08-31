@@ -22,6 +22,7 @@ import { usePWA } from '../../contexts/PWAContext';
 import { PageId } from './Sidebar';
 import { formatDateTime } from '../../lib/utils';
 import { WorkOrder } from '../../types';
+import { BrandIcon } from '../common/BrandLogo';
 
 interface HeaderProps {
   onToggleSidebar?: () => void;
@@ -85,13 +86,20 @@ export const Header: React.FC<HeaderProps> = ({
             <Menu className="w-5 h-5" />
           </button>
 
-          <div>
-            <h2 className="text-base sm:text-lg font-bold text-slate-100 leading-tight">
-              {currentInfo.title}
-            </h2>
-            <p className="text-xs text-slate-400 hidden sm:block">
-              {currentInfo.subtitle}
-            </p>
+          {/* T&S Industrial Service Brand Icon Badge */}
+          <div className="flex items-center gap-2.5">
+            <BrandIcon size="sm" className="hidden sm:flex shadow-sm shadow-blue-950/80" />
+            <div>
+              <h2 className="text-base sm:text-lg font-bold text-slate-100 leading-tight flex items-center gap-2">
+                <span className="sm:hidden">
+                  <BrandIcon size="xs" />
+                </span>
+                <span>{currentInfo.title}</span>
+              </h2>
+              <p className="text-xs text-slate-400 hidden sm:block">
+                {currentInfo.subtitle}
+              </p>
+            </div>
           </div>
         </div>
 

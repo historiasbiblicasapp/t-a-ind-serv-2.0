@@ -21,9 +21,10 @@ import { WorkOrderDetailModal } from './components/workOrders/WorkOrderDetailMod
 import { WorkOrderPrintView } from './components/workOrders/WorkOrderPrintView';
 import { QRScannerModal } from './components/common/QRScannerModal';
 import { PageId, WorkOrder } from './types';
+import { ShieldCheck } from 'lucide-react';
 
 const MainAppContent: React.FC = () => {
-  const { isAuthenticated } = useAuth();
+  const { isAuthenticated, currentUser } = useAuth();
   const [currentPage, setCurrentPage] = useState<PageId>('dashboard');
   const [isSidebarOpen, setIsSidebarOpen] = useState(false);
   const [isSidebarCollapsed, setIsSidebarCollapsed] = useState(false);
@@ -135,7 +136,27 @@ const MainAppContent: React.FC = () => {
 
             {currentPage === 'indicators' && <IndicatorsView />}
 
-            {currentPage === 'settings' && <SettingsView />}
+            {currentPage === 'settings' && (
+              currentUser?.isMaster || currentUser?.email?.toLowerCase() === 'microwasmel@gmail.com' ? (
+                <SettingsView />
+              ) : (
+                <div className="p-8 bg-slate-900 border border-slate-800 rounded-2xl text-center space-y-4 max-w-md mx-auto my-12">
+                  <div className="w-12 h-12 rounded-xl bg-rose-500/10 border border-rose-500/30 text-rose-400 flex items-center justify-center mx-auto">
+                    <ShieldCheck className="w-6 h-6" />
+                  </div>
+                  <h3 className="text-lg font-bold text-slate-100">Acesso Restrito ao Administrador Master</h3>
+                  <p className="text-xs text-slate-400">
+                    Apenas o usuário Master tem permissão para visualizar e gerenciar as configurações do sistema.
+                  </p>
+                  <button
+                    onClick={() => setCurrentPage('dashboard')}
+                    className="px-4 py-2 bg-amber-500 hover:bg-amber-400 text-slate-950 font-bold text-xs rounded-xl"
+                  >
+                    Voltar ao Dashboard
+                  </button>
+                </div>
+              )
+            )}
           </div>
         </main>
       </div>

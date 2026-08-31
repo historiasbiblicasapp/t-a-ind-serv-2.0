@@ -99,15 +99,30 @@ export const LoginView: React.FC = () => {
       <main className="relative z-10 flex-1 flex items-center justify-center p-4 sm:p-6 my-auto">
         <div className="w-full max-w-md bg-slate-900/90 backdrop-blur-xl border border-slate-800 rounded-2xl p-6 sm:p-8 shadow-2xl shadow-black/80">
           
-          {/* Header Title */}
-          <div className="text-center mb-6">
-            <div className="inline-flex items-center justify-center w-12 h-12 rounded-xl bg-gradient-to-br from-amber-400 to-amber-600 text-slate-950 font-black shadow-lg shadow-amber-500/20 mb-3">
-              <ShieldCheck className="w-6 h-6" />
+          {/* Brand Logo & Header Title */}
+          <div className="text-center mb-6 flex flex-col items-center">
+            <div className="mb-3 relative group">
+              <div className="w-20 h-20 rounded-2xl bg-gradient-to-br from-blue-600 via-blue-900 to-slate-950 p-2 flex items-center justify-center shadow-xl shadow-blue-950/80 border border-blue-400/40 overflow-hidden">
+                <img
+                  src="/logo.png"
+                  alt="T&S Industrial Service"
+                  referrerPolicy="no-referrer"
+                  className="w-full h-full object-contain filter drop-shadow-md"
+                  onError={(e) => {
+                    e.currentTarget.src = '/logo.svg';
+                  }}
+                />
+              </div>
             </div>
-            <h1 className="text-xl sm:text-2xl font-black text-slate-100 tracking-tight">
-              Portal de Acesso Industrial
-            </h1>
-            <p className="text-xs text-slate-400 mt-1">
+            
+            <div className="flex items-center gap-1.5 justify-center">
+              <span className="font-black text-2xl text-slate-100 tracking-tight">T&amp;S</span>
+              <span className="font-bold text-2xl text-amber-400 tracking-tight">Industrial</span>
+            </div>
+            <span className="text-[10px] font-bold uppercase tracking-widest text-slate-400 mt-0.5">
+              Industrial Service
+            </span>
+            <p className="text-xs text-slate-400 mt-2">
               Controle de Manutenção, Ordens de Serviço &amp; Ativos
             </p>
           </div>

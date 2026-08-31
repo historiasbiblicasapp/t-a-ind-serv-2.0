@@ -22,6 +22,7 @@ import {
   ArrowUpRight
 } from 'lucide-react';
 import { PageId } from '../types';
+import { BrandIcon } from '../components/common/BrandLogo';
 
 interface DashboardViewProps {
   onNavigate?: (page: PageId) => void;
@@ -51,19 +52,22 @@ export const DashboardView: React.FC<DashboardViewProps> = ({
     <div className="space-y-6">
       {/* Top Banner / Quick Action Bar */}
       <div className="bg-gradient-to-r from-slate-900 via-slate-900 to-slate-950 p-5 rounded-2xl border border-slate-800 shadow-xl flex flex-col md:flex-row md:items-center justify-between gap-4">
-        <div>
-          <div className="flex items-center gap-2">
-            <span className="w-2.5 h-2.5 rounded-full bg-emerald-400 animate-pulse" />
-            <span className="text-xs font-bold uppercase tracking-wider text-amber-400">
-              Painel Operacional em Tempo Real
-            </span>
+        <div className="flex items-center gap-4">
+          <BrandIcon size="lg" className="shadow-lg shadow-blue-950" />
+          <div>
+            <div className="flex items-center gap-2">
+              <span className="w-2.5 h-2.5 rounded-full bg-emerald-400 animate-pulse" />
+              <span className="text-xs font-bold uppercase tracking-wider text-amber-400">
+                Painel Operacional em Tempo Real
+              </span>
+            </div>
+            <h1 className="text-xl sm:text-2xl font-black text-slate-100 mt-1 tracking-tight">
+              T&amp;S Industrial Service
+            </h1>
+            <p className="text-xs text-slate-400 mt-0.5">
+              Monitoramento de ativos, confiabilidade de planta e ordens de serviço ativas.
+            </p>
           </div>
-          <h1 className="text-xl sm:text-2xl font-black text-slate-100 mt-1 tracking-tight">
-            T&amp;S Industrial Service
-          </h1>
-          <p className="text-xs text-slate-400 mt-0.5">
-            Monitoramento de ativos, confiabilidade de planta e ordens de serviço ativas.
-          </p>
         </div>
 
         <div className="flex flex-wrap items-center gap-2.5">

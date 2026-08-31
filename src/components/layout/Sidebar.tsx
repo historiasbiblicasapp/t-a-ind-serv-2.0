@@ -66,6 +66,8 @@ export const Sidebar: React.FC<SidebarProps> = ({
   const openOrdersCount = workOrders.filter(w => w.status === 'Aberta' || w.status === 'Em execução').length;
   const lowStockCount = parts.filter(p => p.status === 'Estoque Baixo' || p.status === 'Crítico' || p.status === 'Sem Estoque').length;
 
+  const isMasterUser = Boolean(currentUser?.isMaster || currentUser?.email?.toLowerCase() === 'microwasmel@gmail.com');
+
   const menuItems = [
     { id: 'dashboard' as PageId, label: 'Dashboard', icon: LayoutDashboard },
     { id: 'work-orders' as PageId, label: 'Ordens de Serviço', icon: ClipboardList, badge: openOrdersCount > 0 ? openOrdersCount : undefined, badgeColor: 'bg-amber-500/20 text-amber-300 border-amber-500/30' },
@@ -77,7 +79,7 @@ export const Sidebar: React.FC<SidebarProps> = ({
     { id: 'suppliers' as PageId, label: 'Fornecedores', icon: Building2 },
     { id: 'reports' as PageId, label: 'Relatórios', icon: FileSpreadsheet },
     { id: 'indicators' as PageId, label: 'Indicadores', icon: BarChart3 },
-    { id: 'settings' as PageId, label: 'Configurações', icon: Settings },
+    ...(isMasterUser ? [{ id: 'settings' as PageId, label: 'Configurações', icon: Settings }] : []),
   ];
 
   return (
