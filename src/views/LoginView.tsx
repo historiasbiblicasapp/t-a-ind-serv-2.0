@@ -6,7 +6,6 @@ import {
   Lock, 
   Mail, 
   ShieldCheck, 
-  Crown, 
   ArrowRight, 
   Eye, 
   EyeOff, 
@@ -15,17 +14,16 @@ import {
   WifiOff, 
   AlertCircle,
   HardHat,
-  Users,
-  CheckCircle2,
-  Wrench
+  Wrench,
+  UserCheck
 } from 'lucide-react';
 
 export const LoginView: React.FC = () => {
-  const { login, loginAsMaster, users } = useAuth();
+  const { login } = useAuth();
   const { isOnline, isInstallable, installApp } = usePWA();
 
-  const [email, setEmail] = useState('microwasmel@gmail.com');
-  const [password, setPassword] = useState('admin');
+  const [email, setEmail] = useState('');
+  const [password, setPassword] = useState('');
   const [showPassword, setShowPassword] = useState(false);
   const [rememberMe, setRememberMe] = useState(true);
   const [errorMessage, setErrorMessage] = useState('');
@@ -43,14 +41,6 @@ export const LoginView: React.FC = () => {
       }
       setIsLoading(false);
     }, 250);
-  };
-
-  const handleMasterClick = () => {
-    setIsLoading(true);
-    setTimeout(() => {
-      loginAsMaster();
-      setIsLoading(false);
-    }, 200);
   };
 
   const handleSelectQuickUser = (userEmail: string, userPass = 'admin') => {
@@ -125,32 +115,6 @@ export const LoginView: React.FC = () => {
             <p className="text-xs text-slate-400 mt-2">
               Controle de Manutenção, Ordens de Serviço &amp; Ativos
             </p>
-          </div>
-
-          {/* Master 1-Click Access Card */}
-          <div className="mb-6 p-3.5 rounded-xl bg-gradient-to-r from-amber-500/10 via-amber-500/5 to-transparent border border-amber-500/30 flex items-center justify-between gap-3">
-            <div className="flex items-center gap-2.5 min-w-0">
-              <div className="w-9 h-9 rounded-lg bg-amber-500/20 border border-amber-500/40 flex items-center justify-center text-amber-400 flex-shrink-0">
-                <Crown className="w-5 h-5" />
-              </div>
-              <div className="min-w-0">
-                <div className="flex items-center gap-1.5">
-                  <span className="text-xs font-bold text-amber-300">Login Master</span>
-                  <span className="text-[9px] px-1.5 py-0.2 bg-amber-500 text-slate-950 font-extrabold rounded">TOTAL</span>
-                </div>
-                <p className="text-[11px] text-slate-300 truncate font-mono">microwasmel@gmail.com</p>
-              </div>
-            </div>
-            <button
-              id="login-master-quick-btn"
-              type="button"
-              onClick={handleMasterClick}
-              disabled={isLoading}
-              className="px-3 py-1.5 bg-amber-500 hover:bg-amber-400 text-slate-950 text-xs font-black rounded-lg transition-all shadow-md shadow-amber-500/20 active:scale-95 flex-shrink-0 flex items-center gap-1"
-            >
-              <span>Entrar Master</span>
-              <ArrowRight className="w-3.5 h-3.5" />
-            </button>
           </div>
 
           {/* Error Feedback */}
@@ -247,14 +211,14 @@ export const LoginView: React.FC = () => {
             <div className="grid grid-cols-2 gap-2">
               <button
                 type="button"
-                onClick={() => handleSelectQuickUser('microwasmel@gmail.com', 'admin')}
+                onClick={() => handleSelectQuickUser('admin@tsindustrial.com', 'admin')}
                 className="p-2 rounded-lg bg-slate-800/60 hover:bg-slate-800 border border-slate-700/60 text-left transition-all group"
               >
                 <div className="flex items-center gap-1.5">
-                  <Crown className="w-3.5 h-3.5 text-amber-400" />
-                  <span className="text-xs font-bold text-slate-200 group-hover:text-amber-400">Master</span>
+                  <UserCheck className="w-3.5 h-3.5 text-amber-400" />
+                  <span className="text-xs font-bold text-slate-200 group-hover:text-amber-400">Administrador</span>
                 </div>
-                <span className="text-[10px] text-slate-400 block truncate">microwasmel@gmail.com</span>
+                <span className="text-[10px] text-slate-400 block truncate">Carlos Ferreira</span>
               </button>
 
               <button

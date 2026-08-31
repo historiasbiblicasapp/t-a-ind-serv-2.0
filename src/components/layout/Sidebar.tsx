@@ -208,11 +208,13 @@ export const Sidebar: React.FC<SidebarProps> = ({
                 className="text-[11px] bg-slate-950 border border-slate-800 rounded px-2 py-1 text-slate-300 focus:outline-none focus:border-amber-500/50 flex-1 truncate"
                 title="Trocar Usuário / Perfil"
               >
-                {users.map((u) => (
-                  <option key={u.id} value={u.id}>
-                    {u.isMaster ? '★ Master: ' : `${u.role}: `}{u.name.split(' ')[0]}
-                  </option>
-                ))}
+                {users
+                  .filter((u) => !u.isMaster || isMasterUser)
+                  .map((u) => (
+                    <option key={u.id} value={u.id}>
+                      {u.isMaster ? '★ Master: ' : `${u.role}: `}{u.name.split(' ')[0]}
+                    </option>
+                  ))}
               </select>
 
               <button
