@@ -92,21 +92,11 @@ export const LoginView: React.FC = () => {
           {/* Brand Logo & Header Title */}
           <div className="text-center mb-6 flex flex-col items-center">
             <div className="mb-3 relative group">
-              <div className="w-20 h-20 rounded-2xl bg-gradient-to-br from-blue-600 via-blue-900 to-slate-950 p-2 flex items-center justify-center shadow-xl shadow-blue-950/80 border border-blue-400/40 overflow-hidden">
-                <img
-                  src="/logo.png"
-                  alt="T&S Industrial Service"
-                  referrerPolicy="no-referrer"
-                  className="w-full h-full object-contain filter drop-shadow-md"
-                  onError={(e) => {
-                    e.currentTarget.src = '/logo.svg';
-                  }}
-                />
-              </div>
+              <BrandLogo size="xl" showText={false} />
             </div>
             
             <div className="flex items-center gap-1.5 justify-center">
-              <span className="font-black text-2xl text-slate-100 tracking-tight">T&amp;S</span>
+              <span className="font-black text-2xl text-slate-100 tracking-tight">T&amp;A</span>
               <span className="font-bold text-2xl text-amber-400 tracking-tight">Industrial</span>
             </div>
             <span className="text-[10px] font-bold uppercase tracking-widest text-slate-400 mt-0.5">
@@ -264,7 +254,7 @@ export const LoginView: React.FC = () => {
       {/* Footer */}
       <footer className="relative z-10 px-4 py-3 border-t border-slate-900 bg-slate-950/80 text-center text-xs text-slate-500">
         <div className="max-w-7xl mx-auto flex flex-col sm:flex-row items-center justify-between gap-2">
-          <span>&copy; {new Date().getFullYear()} T&amp;S Industrial Service. Todos os direitos reservados.</span>
+          <span>&copy; {new Date().getFullYear()} T&amp;A Industrial Service. Todos os direitos reservados.</span>
           <div className="flex items-center gap-4 text-[11px] text-slate-400">
             <span>PWA v1.0.0 • Service Worker Ativo</span>
             <span>Armazenamento Local Criptografado</span>

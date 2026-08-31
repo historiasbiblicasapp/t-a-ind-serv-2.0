@@ -79,6 +79,12 @@ export interface WorkOrderValues {
   materialsCost: number;
   servicesCost: number;
   resourcesCost: number;
+  travelCost?: number; // Deslocamento da Equipe (Km / Transporte / Logística / Diárias)
+  travelDistanceKm?: number; // Distância percorrida em Km
+  travelRatePerKm?: number; // Tarifa por Km (ex: R$ 2,50/km)
+  taxPercent?: number; // Alíquota percentual de Impostos (ISS, ICMS, Simples, etc.)
+  taxAmount?: number; // Valor calculado em R$ dos Impostos
+  subtotalCost?: number; // Subtotal operacional antes dos impostos
   additionalCosts: number;
   totalCost: number;
 }

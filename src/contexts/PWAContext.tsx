@@ -60,7 +60,7 @@ export const PWAProvider: React.FC<{ children: React.ReactNode }> = ({ children 
         .register('/sw.js')
         .then((reg) => {
           setRegistration(reg);
-          console.log('[T&S PWA] Service Worker registered with scope:', reg.scope);
+          console.log('[T&A PWA] Service Worker registered with scope:', reg.scope);
 
           // Check for SW updates
           reg.addEventListener('updatefound', () => {
@@ -75,7 +75,7 @@ export const PWAProvider: React.FC<{ children: React.ReactNode }> = ({ children 
           });
         })
         .catch((err) => {
-          console.warn('[T&S PWA] Service Worker registration failed:', err);
+          console.warn('[T&A PWA] Service Worker registration failed:', err);
         });
     }
 
@@ -100,7 +100,7 @@ export const PWAProvider: React.FC<{ children: React.ReactNode }> = ({ children 
         return true;
       }
     } catch (err) {
-      console.error('[T&S PWA] Error during installation prompt:', err);
+      console.error('[T&A PWA] Error during installation prompt:', err);
     }
     return false;
   };

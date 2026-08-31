@@ -70,7 +70,7 @@ export const Header: React.FC<HeaderProps> = ({
     settings: { title: 'Configurações do Sistema', subtitle: 'Banco de dados Supabase, Auditoria e Parâmetros' },
   };
 
-  const currentInfo = pageTitles[currentPage] || { title: 'T&S Industrial Service', subtitle: 'Sistema de Gestão Industrial' };
+  const currentInfo = pageTitles[currentPage] || { title: 'T&A Industrial Service', subtitle: 'Sistema de Gestão Industrial' };
 
   return (
     <header className="sticky top-0 z-30 bg-slate-900/95 backdrop-blur-md border-b border-slate-800 px-4 sm:px-6 py-2.5">
@@ -86,9 +86,9 @@ export const Header: React.FC<HeaderProps> = ({
             <Menu className="w-5 h-5" />
           </button>
 
-          {/* T&S Industrial Service Brand Icon Badge */}
+          {/* T&A Industrial Service Brand Icon Badge */}
           <div className="flex items-center gap-2.5">
-            <BrandIcon size="sm" className="hidden sm:flex shadow-sm shadow-blue-950/80" />
+            <BrandIcon size="sm" className="hidden sm:flex" />
             <div>
               <h2 className="text-base sm:text-lg font-bold text-slate-100 leading-tight flex items-center gap-2">
                 <span className="sm:hidden">
@@ -124,7 +124,7 @@ export const Header: React.FC<HeaderProps> = ({
               id="header-install-pwa-btn"
               onClick={() => installApp()}
               className="flex items-center gap-1.5 px-2.5 py-1.5 bg-amber-500 hover:bg-amber-400 text-slate-950 rounded-lg text-xs font-bold transition-all shadow-sm shadow-amber-500/20 active:scale-95"
-              title="Instalar T&S Industrial Service no Navegador"
+              title="Instalar T&A Industrial Service no Navegador"
             >
               <Download className="w-3.5 h-3.5" />
               <span className="hidden sm:inline">Instalar App</span>

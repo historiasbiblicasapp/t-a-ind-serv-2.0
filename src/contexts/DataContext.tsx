@@ -152,22 +152,45 @@ export const DataProvider: React.FC<{ children: React.ReactNode }> = ({ children
     // Apply mandatory Escopo -> Mão de Obra sync
     const syncedLabor = syncScopeToLabor(order.scope, order.labor, employees, positions);
 
-    // Calculate labor total cost
+    // Calculate labor and resources total cost
     const totalLaborCost = syncedLabor.reduce((acc, curr) => acc + curr.totalValue, 0);
     const totalResourcesCost = order.resources.reduce((acc, curr) => acc + curr.totalCost, 0);
+
+    // Calculate Travel / Displacement Cost
+    const travelDistance = Number(order.values?.travelDistanceKm) || 0;
+    const travelRate = Number(order.values?.travelRatePerKm) || 0;
+    const directTravelCost = Number(order.values?.travelCost) || 0;
+    const computedTravelCost = directTravelCost > 0 ? directTravelCost : (travelDistance * travelRate);
+
+    // Subtotal of all direct operational costs
+    const subtotal = (
+      totalLaborCost +
+      (Number(order.values?.partsCost) || 0) +
+      (Number(order.values?.materialsCost) || 0) +
+      (Number(order.values?.servicesCost) || 0) +
+      totalResourcesCost +
+      (Number(order.values?.additionalCosts) || 0) +
+      computedTravelCost
+    );
+
+    // Calculate Tax Amount
+    const taxPercent = Number(order.values?.taxPercent) || 0;
+    const explicitTaxAmount = Number(order.values?.taxAmount) || 0;
+    const computedTaxAmount = explicitTaxAmount > 0 ? explicitTaxAmount : ((subtotal * taxPercent) / 100);
+
+    const grandTotal = subtotal + computedTaxAmount;
 
     const calculatedValues = {
       ...order.values,
       laborCost: totalLaborCost,
       resourcesCost: totalResourcesCost,
-      totalCost: (
-        totalLaborCost +
-        (order.values.partsCost || 0) +
-        (order.values.materialsCost || 0) +
-        (order.values.servicesCost || 0) +
-        totalResourcesCost +
-        (order.values.additionalCosts || 0)
-      )
+      travelCost: computedTravelCost,
+      travelDistanceKm: travelDistance,
+      travelRatePerKm: travelRate,
+      taxPercent: taxPercent,
+      taxAmount: computedTaxAmount,
+      subtotalCost: subtotal,
+      totalCost: grandTotal
     };
 
     const finalOrder: WorkOrder = {
@@ -281,7 +304,7 @@ export const DataProvider: React.FC<{ children: React.ReactNode }> = ({ children
       requesterId: currentUser?.id,
       date: dateStr,
       time: timeStr,
-      company: eq?.company || 'T&S Industrial Service Ltda.',
+      company: eq?.company || 'T&A Industrial Service Ltda.',
       unit: eq?.unit || 'Planta Principal - Joinville',
       department: eq?.department || 'Manutenção Preventiva',
       area: eq?.area || 'Linha Operacional',

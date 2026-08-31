@@ -90,7 +90,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
       password: 'admin',
       phone: '(47) 99999-8888',
       role: 'Administrador' as UserRole,
-      company: 'T&S Industrial Service Ltda.',
+      company: 'T&A Industrial Service Ltda.',
       unit: 'Planta Principal - Joinville',
       department: 'Diretoria de Engenharia & Manutenção',
       status: 'Ativo' as const,

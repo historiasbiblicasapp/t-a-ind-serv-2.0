@@ -1,6 +1,6 @@
 {
-  "name": "T&S Industrial Service",
-  "short_name": "T&S Service",
+  "name": "T&A Industrial Service",
+  "short_name": "T&A Service",
   "description": "Sistema de Gestão de Manutenção Industrial e Ordens de Serviço Offline-First",
   "start_url": "/",
   "scope": "/",

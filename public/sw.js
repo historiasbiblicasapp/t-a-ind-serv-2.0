@@ -1,5 +1,5 @@
-// T&S Industrial Service - Service Worker
-const CACHE_NAME = 'ts-service-v1';
+// T&A Industrial Service - Service Worker
+const CACHE_NAME = 'ta-service-v2';
 const STATIC_ASSETS = [
   '/',
   '/index.html',
@@ -15,9 +15,9 @@ const STATIC_ASSETS = [
 self.addEventListener('install', (event) => {
   event.waitUntil(
     caches.open(CACHE_NAME).then((cache) => {
-      console.log('[T&S SW] Precaching static assets for offline operation');
+      console.log('[T&A SW] Precaching static assets for offline operation');
       return cache.addAll(STATIC_ASSETS).catch((err) => {
-        console.warn('[T&S SW] Pre-cache warning (some assets will be cached on demand):', err);
+        console.warn('[T&A SW] Pre-cache warning (some assets will be cached on demand):', err);
       });
     }).then(() => self.skipWaiting())
   );
@@ -30,7 +30,7 @@ self.addEventListener('activate', (event) => {
       return Promise.all(
         cacheNames.map((name) => {
           if (name !== CACHE_NAME) {
-            console.log('[T&S SW] Removing legacy cache:', name);
+            console.log('[T&A SW] Removing legacy cache:', name);
             return caches.delete(name);
           }
         })

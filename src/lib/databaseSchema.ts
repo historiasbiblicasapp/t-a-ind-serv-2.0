@@ -1,5 +1,5 @@
 export const SUPABASE_SQL_SCHEMA = `-- ====================================================================
--- T&S INDUSTRIAL SERVICE - SISTEMA DE GESTÃO DE MANUTENÇÃO INDUSTRIAL
+-- T&A INDUSTRIAL SERVICE - SISTEMA DE GESTÃO DE MANUTENÇÃO INDUSTRIAL
 -- Script Completo de Criação de Banco de Dados PostgreSQL / Supabase
 -- ====================================================================
 

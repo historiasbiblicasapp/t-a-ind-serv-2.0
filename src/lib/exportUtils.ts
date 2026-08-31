@@ -49,7 +49,7 @@ export function exportToPDF(title: string, subtitle: string, headers: string[], 
   doc.setTextColor(255, 255, 255);
   doc.setFontSize(16);
   doc.setFont('helvetica', 'bold');
-  doc.text('T&S Industrial Service', 14, 12);
+  doc.text('T&A Industrial Service', 14, 12);
 
   doc.setFontSize(9);
   doc.setFont('helvetica', 'normal');
@@ -112,7 +112,7 @@ export function exportToPDF(title: string, subtitle: string, headers: string[], 
   // Footer
   doc.setFontSize(7.5);
   doc.setTextColor(100, 116, 139);
-  doc.text('T&S Industrial Service — Relatório Gerencial de Conformidade e Engenharia de Ativos', 14, 202);
+  doc.text('T&A Industrial Service — Relatório Gerencial de Conformidade e Engenharia de Ativos', 14, 202);
   doc.text('Página 1 de 1', 283, 202, { align: 'right' });
 
   doc.save(`${filename}.pdf`);
