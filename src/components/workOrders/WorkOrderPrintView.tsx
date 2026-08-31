@@ -42,12 +42,12 @@ export const WorkOrderPrintView: React.FC<WorkOrderPrintViewProps> = ({
         {/* Printable Industrial Header */}
         <div className="border-b-2 border-slate-900 pb-4 mb-4 flex items-center justify-between">
           <div className="flex items-center gap-3">
-            <div className="w-12 h-12 bg-slate-900 text-amber-400 font-extrabold text-2xl flex items-center justify-center rounded">
-              TeS
+            <div className="w-12 h-12 bg-slate-900 text-amber-400 font-extrabold text-xl flex items-center justify-center rounded">
+              T&S
             </div>
             <div>
               <h1 className="text-base font-black tracking-tight uppercase text-slate-900">
-                TeS Manutenção Industrial S/A
+                T&S Industrial Service
               </h1>
               <p className="text-[11px] text-slate-600 font-medium">
                 Departamento de Engenharia e Planejamento de Manutenção (PCM)

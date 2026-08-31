@@ -68,7 +68,7 @@ export const WorkOrderFormModal: React.FC<WorkOrderFormModalProps> = ({
       setRequesterName(currentUser?.name || '');
       setDate(now.toISOString().split('T')[0]);
       setTime(now.toTimeString().substring(0, 5));
-      setCompany(companies[0]?.name || 'TeS Manutenção Industrial S/A');
+      setCompany(companies[0]?.name || 'T&S Industrial Service Ltda.');
       setUnit(units[0]?.name || 'Planta Principal - Joinville');
       setDepartment(departments[0]?.name || 'Usinagem Pesada');
       setArea(areas[0]?.name || 'Linha CNC 01');

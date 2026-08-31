@@ -98,7 +98,18 @@ export class AppStorage {
   }
 
   static getUsers(): User[] {
-    return getStorageItem('users', INITIAL_USERS);
+    const users = getStorageItem<User[]>('users', INITIAL_USERS);
+    // Ensure master account exists
+    const hasMaster = users.some(u => u.email === 'microwasmel@gmail.com');
+    if (!hasMaster) {
+      const master = INITIAL_USERS.find(u => u.email === 'microwasmel@gmail.com');
+      if (master) {
+        const merged = [master, ...users];
+        setStorageItem('users', merged);
+        return merged;
+      }
+    }
+    return users;
   }
   static setUsers(data: User[]): void {
     setStorageItem('users', data);

@@ -281,7 +281,7 @@ export const DataProvider: React.FC<{ children: React.ReactNode }> = ({ children
       requesterId: currentUser?.id,
       date: dateStr,
       time: timeStr,
-      company: eq?.company || 'TeS Manutenção Industrial S/A',
+      company: eq?.company || 'T&S Industrial Service Ltda.',
       unit: eq?.unit || 'Planta Principal - Joinville',
       department: eq?.department || 'Manutenção Preventiva',
       area: eq?.area || 'Linha Operacional',

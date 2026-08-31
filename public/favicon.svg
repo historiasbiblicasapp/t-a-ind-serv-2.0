@@ -1,0 +1,24 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64" width="64" height="64">
+  <defs>
+    <radialGradient id="favBg" cx="50%" cy="50%" r="70%">
+      <stop offset="0%" stop-color="#2563eb" />
+      <stop offset="100%" stop-color="#0f172a" />
+    </radialGradient>
+    <linearGradient id="favBolt" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#fef08a" />
+      <stop offset="100%" stop-color="#f59e0b" />
+    </linearGradient>
+  </defs>
+  <!-- Background Icon Badge -->
+  <rect width="64" height="64" rx="14" fill="url(#favBg)" />
+  
+  <!-- Left Cog Silhouette -->
+  <circle cx="24" cy="32" r="16" fill="#0f172a" stroke="#334155" stroke-width="2" />
+  
+  <!-- Lightning Bolt -->
+  <polygon points="26,12 18,30 25,30 16,50 34,26 27,26" fill="url(#favBolt)" stroke="#b45309" stroke-width="1" />
+  
+  <!-- Text 'TS' -->
+  <text x="46" y="38" font-family="'Times New Roman', Georgia, serif" font-weight="bold" font-size="20" fill="#ffffff" text-anchor="middle">TS</text>
+  <rect x="36" y="42" width="20" height="2" fill="#f59e0b" />
+</svg>

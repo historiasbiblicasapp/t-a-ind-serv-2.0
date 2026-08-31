@@ -1,8 +1,10 @@
 import React, { useState } from 'react';
+import { PWAProvider } from './contexts/PWAContext';
 import { AuthProvider, useAuth } from './contexts/AuthContext';
 import { DataProvider, useData } from './contexts/DataContext';
 import { Sidebar } from './components/layout/Sidebar';
 import { Header } from './components/layout/Header';
+import { LoginView } from './views/LoginView';
 import { DashboardView } from './views/DashboardView';
 import { WorkOrdersView } from './views/WorkOrdersView';
 import { EquipmentView } from './views/EquipmentView';
@@ -21,6 +23,7 @@ import { QRScannerModal } from './components/common/QRScannerModal';
 import { PageId, WorkOrder } from './types';
 
 const MainAppContent: React.FC = () => {
+  const { isAuthenticated } = useAuth();
   const [currentPage, setCurrentPage] = useState<PageId>('dashboard');
   const [isSidebarOpen, setIsSidebarOpen] = useState(false);
   const [isSidebarCollapsed, setIsSidebarCollapsed] = useState(false);
@@ -32,6 +35,11 @@ const MainAppContent: React.FC = () => {
   const [isQRScannerOpen, setIsQRScannerOpen] = useState(false);
 
   const { workOrders, equipment } = useData();
+
+  // If not authenticated, display full-screen Login View
+  if (!isAuthenticated) {
+    return <LoginView />;
+  }
 
   const handleSelectWorkOrder = (order: WorkOrder) => {
     setSelectedOrder(order);
@@ -80,6 +88,7 @@ const MainAppContent: React.FC = () => {
       <div className="flex-1 flex flex-col min-w-0 h-screen overflow-hidden">
         {/* Top Header */}
         <Header
+          currentPage={currentPage}
           onToggleSidebar={() => setIsSidebarOpen(!isSidebarOpen)}
           onOpenNewWorkOrder={() => setIsNewOrderModalOpen(true)}
           onOpenQRScanner={() => setIsQRScannerOpen(true)}
@@ -173,10 +182,12 @@ const MainAppContent: React.FC = () => {
 
 export default function App() {
   return (
-    <AuthProvider>
-      <DataProvider>
-        <MainAppContent />
-      </DataProvider>
-    </AuthProvider>
+    <PWAProvider>
+      <AuthProvider>
+        <DataProvider>
+          <MainAppContent />
+        </DataProvider>
+      </AuthProvider>
+    </PWAProvider>
   );
 }

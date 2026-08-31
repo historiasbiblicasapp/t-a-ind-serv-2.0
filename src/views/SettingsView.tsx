@@ -224,7 +224,7 @@ export const SettingsView: React.FC = () => {
             <div className="space-y-2.5 text-xs">
               <div className="flex justify-between py-1.5 border-b border-slate-800">
                 <span className="text-slate-400">Sistema:</span>
-                <span className="font-bold text-slate-200">TeS Manutenção Industrial S/A</span>
+                <span className="font-bold text-slate-200">T&amp;S Industrial Service</span>
               </div>
               <div className="flex justify-between py-1.5 border-b border-slate-800">
                 <span className="text-slate-400">Versão:</span>

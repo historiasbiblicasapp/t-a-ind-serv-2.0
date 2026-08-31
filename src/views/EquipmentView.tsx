@@ -60,7 +60,7 @@ export const EquipmentView: React.FC<EquipmentViewProps> = () => {
     setCategory('Usinagem CNC');
     setCriticality('B');
     setStatus('Operacional');
-    setCompany(companies[0]?.name || 'TeS Manutenção Industrial S/A');
+    setCompany(companies[0]?.name || 'T&S Industrial Service Ltda.');
     setUnit(units[0]?.name || 'Planta Principal - Joinville');
     setDepartment(departments[0]?.name || 'Usinagem Pesada');
     setArea(areas[0]?.name || 'Linha CNC 01');
@@ -370,7 +370,7 @@ export const EquipmentView: React.FC<EquipmentViewProps> = () => {
         >
           <div className="p-6 bg-white text-slate-900 rounded-xl flex flex-col items-center justify-center text-center space-y-4 border border-slate-300">
             <div className="flex items-center gap-2 border-b border-slate-300 pb-2 w-full justify-center">
-              <span className="font-black text-lg text-slate-900 tracking-tight">TeS MANUTENÇÃO</span>
+              <span className="font-black text-lg text-slate-900 tracking-tight">T&amp;S INDUSTRIAL SERVICE</span>
             </div>
 
             {/* Industrial QR Code representation */}

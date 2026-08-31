@@ -59,7 +59,7 @@ export const DashboardView: React.FC<DashboardViewProps> = ({
             </span>
           </div>
           <h1 className="text-xl sm:text-2xl font-black text-slate-100 mt-1 tracking-tight">
-            TeS Manutenção Industrial
+            T&amp;S Industrial Service
           </h1>
           <p className="text-xs text-slate-400 mt-0.5">
             Monitoramento de ativos, confiabilidade de planta e ordens de serviço ativas.

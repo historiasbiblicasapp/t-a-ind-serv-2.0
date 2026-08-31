@@ -24,6 +24,7 @@ export interface User {
   id: string;
   name: string;
   email: string;
+  password?: string;
   phone: string;
   photoUrl?: string;
   role: UserRole;
@@ -31,6 +32,7 @@ export interface User {
   unit: string;
   department: string;
   status: 'Ativo' | 'Inativo';
+  isMaster?: boolean;
   createdAt: string;
 }
 
