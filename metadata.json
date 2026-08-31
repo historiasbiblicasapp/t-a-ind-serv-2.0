@@ -1,0 +1,6 @@
+{
+  "name": "TeS Manutenção",
+  "description": "Sistema de Gestão de Manutenção Industrial - Gestão completa de ordens de serviço, escopo, mão de obra, equipamentos, preventivas, estoque, custos e indicadores.",
+  "requestFramePermissions": ["camera"],
+  "majorCapabilities": ["MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"]
+}
