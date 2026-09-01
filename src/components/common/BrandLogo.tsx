@@ -8,57 +8,60 @@ interface BrandLogoProps {
 }
 
 /**
- * Clean Gear + Lightning Bolt Miniature Icon Component
- * Crisp vector render based on the official T&A Industrial emblem
+ * Exact Vector Reproduction of the Official T&A Industrial Service Emblem
+ * 10-Tooth Precision White Industrial Gear + Center Electric Yellow Lightning Bolt
  */
 export const GearBoltIcon: React.FC<{ className?: string; size?: number }> = ({
   className = '',
-  size = 24
+  size = 32
 }) => {
   return (
     <svg
       viewBox="0 0 200 200"
       width={size}
       height={size}
-      className={`flex-shrink-0 ${className}`}
+      className={`flex-shrink-0 select-none ${className}`}
       fill="none"
       xmlns="http://www.w3.org/2000/svg"
     >
-      <defs>
-        <linearGradient id="gBolt" x1="0%" y1="0%" x2="100%" y2="100%">
-          <stop offset="0%" stop-color="#fff04b" />
-          <stop offset="45%" stop-color="#facc15" />
-          <stop offset="100%" stop-color="#eab308" />
-        </linearGradient>
-        <linearGradient id="gMetal" x1="0%" y1="0%" x2="100%" y2="100%">
-          <stop offset="0%" stop-color="#f8fafc" />
-          <stop offset="50%" stop-color="#e2e8f0" />
-          <stop offset="100%" stop-color="#cbd5e1" />
-        </linearGradient>
-        <filter id="gShadow" x="-20%" y="-20%" width="140%" height="140%">
-          <feDropShadow dx="0" dy="2" stdDeviation="3" flood-color="#000000" flood-opacity="0.35" />
-        </filter>
-      </defs>
-      <g transform="translate(100, 100)" filter="url(#gShadow)">
-        {/* Industrial Gear */}
-        <path
-          d="M -16,-82 L 16,-82 L 14,-65 A 66 66 0 0 1 45,-47 L 60,-57 L 80,-34 L 66,-21 A 66 66 0 0 1 73,15 L 89,26 L 79,53 L 57,47 A 66 66 0 0 1 31,70 L 31,90 L -2,92 L -10,71 A 66 66 0 0 1 -45,53 L -63,68 L -82,46 L -68,30 A 66 66 0 0 1 -72,-9 L -92,-17 L -86,-47 L -63,-42 A 66 66 0 0 1 -39,-62 L -34,-80 Z"
-          fill="url(#gMetal)"
-          stroke="#94a3b8"
-          strokeWidth="3.5"
-          strokeLinejoin="round"
-        />
-        {/* Inner Ring */}
-        <circle cx="-1" cy="4" r="42" fill="none" stroke="#94a3b8" strokeWidth="3.5" />
-        {/* Yellow Electric Lightning Bolt */}
-        <polygon
-          points="12,-90 -28,-8 3,-8 -48,92 52,-18 18,-18"
-          fill="url(#gBolt)"
-          stroke="#ca8a04"
-          strokeWidth="2.5"
-          strokeLinejoin="miter"
-        />
-      </g>
+      {/* 10-Tooth White Industrial Gear with Inner Cutout */}
+      <path
+        d="
+          M 90.93 42.71 L 91.85 22.43 L 108.15 22.43 L 109.07 42.71 
+          L 126.33 48.32 L 139.00 32.45 L 152.19 42.03 L 141.01 58.99 
+          L 151.68 73.67 L 171.26 68.27 L 176.30 83.78 L 157.29 90.93 
+          L 157.29 109.07 L 176.30 116.22 L 171.26 131.73 L 151.68 126.33 
+          L 141.01 141.01 L 152.19 157.97 L 139.00 167.55 L 126.33 151.68 
+          L 109.07 157.29 L 108.15 177.57 L 91.85 177.57 L 90.93 157.29 
+          L 73.67 151.68 L 61.00 167.55 L 47.81 157.97 L 58.99 141.01 
+          L 48.32 126.33 L 28.74 131.73 L 23.70 116.22 L 42.71 109.07 
+          L 42.71 90.93 L 23.70 83.78 L 28.74 68.27 L 48.32 73.67 
+          L 58.99 58.99 L 47.81 42.03 L 61.00 32.45 L 73.67 48.32 Z
+          M 100 60
+          A 40 40 0 1 0 100 140
+          A 40 40 0 1 0 100 60 Z
+        "
+        fill="#f8fafc"
+        fillRule="evenodd"
+      />
+
+      {/* Bright Yellow Electric Lightning Bolt */}
+      <polygon
+        points="
+          112,14 
+          148,38 
+          112,72 
+          138,72 
+          92,126 
+          116,126 
+          55,184 
+          82,118 
+          64,118 
+          86,64 
+          66,64
+        "
+        fill="#ffd500"
+      />
     </svg>
   );
 };
@@ -68,7 +71,7 @@ export const BrandIcon: React.FC<{ size?: 'xs' | 'sm' | 'md' | 'lg' | 'xl'; clas
   className = '',
 }) => {
   const sizeMap = {
-    xs: { wrap: 'w-6 h-6 rounded-md p-0.5', iconSize: 18 },
+    xs: { wrap: 'w-6 h-6 rounded-lg p-0.5', iconSize: 18 },
     sm: { wrap: 'w-8 h-8 rounded-lg p-1', iconSize: 24 },
     md: { wrap: 'w-10 h-10 rounded-xl p-1.5', iconSize: 30 },
     lg: { wrap: 'w-12 h-12 rounded-xl p-1.5', iconSize: 38 },
@@ -79,7 +82,7 @@ export const BrandIcon: React.FC<{ size?: 'xs' | 'sm' | 'md' | 'lg' | 'xl'; clas
 
   return (
     <div
-      className={`relative ${wrap} bg-gradient-to-br from-slate-900 via-slate-950 to-slate-900 border border-slate-700/80 flex items-center justify-center shadow-md flex-shrink-0 group overflow-hidden ${className}`}
+      className={`relative ${wrap} bg-[#19202a] border border-slate-700/80 flex items-center justify-center shadow-lg shadow-black/40 flex-shrink-0 group overflow-hidden ${className}`}
       title="T&A Industrial Service"
     >
       <GearBoltIcon size={iconSize} />
@@ -93,20 +96,20 @@ export const BrandLogo: React.FC<BrandLogoProps> = ({
   className = '',
 }) => {
   const sizeMap = {
-    xs: { img: 'w-7 h-7 rounded-md p-1', iconSize: 20, textTitle: 'text-xs', textSub: 'text-[8px]' },
+    xs: { img: 'w-7 h-7 rounded-lg p-1', iconSize: 22, textTitle: 'text-xs', textSub: 'text-[8px]' },
     sm: { img: 'w-8 h-8 rounded-lg p-1', iconSize: 24, textTitle: 'text-xs', textSub: 'text-[9px]' },
-    md: { img: 'w-10 h-10 rounded-xl p-1.5', iconSize: 30, textTitle: 'text-sm', textSub: 'text-[10px]' },
-    lg: { img: 'w-14 h-14 rounded-2xl p-2', iconSize: 42, textTitle: 'text-lg', textSub: 'text-xs' },
-    xl: { img: 'w-20 h-20 rounded-2xl p-3', iconSize: 58, textTitle: 'text-2xl', textSub: 'text-sm' },
-    '2xl': { img: 'w-28 h-28 rounded-3xl p-4', iconSize: 84, textTitle: 'text-3xl', textSub: 'text-base' },
+    md: { img: 'w-10 h-10 rounded-xl p-1', iconSize: 32, textTitle: 'text-sm', textSub: 'text-[10px]' },
+    lg: { img: 'w-14 h-14 rounded-2xl p-1.5', iconSize: 44, textTitle: 'text-lg', textSub: 'text-xs' },
+    xl: { img: 'w-24 h-24 rounded-3xl p-2.5', iconSize: 76, textTitle: 'text-2xl', textSub: 'text-sm' },
+    '2xl': { img: 'w-32 h-32 rounded-3xl p-3', iconSize: 104, textTitle: 'text-3xl', textSub: 'text-base' },
   };
 
   const { img, iconSize, textTitle, textSub } = sizeMap[size] || sizeMap.md;
 
   return (
     <div className={`flex items-center gap-3 select-none ${className}`}>
-      {/* Brand Icon: Clean Industrial Gear + Yellow Lightning Bolt */}
-      <div className={`relative ${img} bg-gradient-to-br from-slate-900 via-slate-950 to-slate-900 border border-slate-700/80 flex items-center justify-center shadow-lg shadow-black/50 flex-shrink-0 group overflow-hidden`}>
+      {/* Brand Icon: Official Emblem on Dark Box */}
+      <div className={`relative ${img} bg-[#19202a] border border-slate-700/80 flex items-center justify-center shadow-xl shadow-black/60 flex-shrink-0 group overflow-hidden transition-transform duration-200 hover:scale-[1.03]`}>
         <GearBoltIcon size={iconSize} />
       </div>
 

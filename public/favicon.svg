@@ -1,60 +1,51 @@
 <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 200 200" width="100%" height="100%">
   <defs>
-    <!-- Lightning Gradient -->
-    <linearGradient id="gearBoltGrad" x1="0%" y1="0%" x2="100%" y2="100%">
-      <stop offset="0%" stop-color="#fff04b" />
-      <stop offset="45%" stop-color="#facc15" />
-      <stop offset="100%" stop-color="#eab308" />
-    </linearGradient>
-
-    <!-- Gear Metal Gradient -->
-    <linearGradient id="gearMetalGrad" x1="0%" y1="0%" x2="100%" y2="100%">
-      <stop offset="0%" stop-color="#f8fafc" />
-      <stop offset="50%" stop-color="#e2e8f0" />
-      <stop offset="100%" stop-color="#cbd5e1" />
-    </linearGradient>
-
-    <!-- Drop Shadow Filter -->
-    <filter id="gearShadow" x="-20%" y="-20%" width="140%" height="140%">
-      <feDropShadow dx="0" dy="2" stdDeviation="3" flood-color="#000000" flood-opacity="0.35" />
-    </filter>
+    <!-- Background Dark Gradient matching the uploaded emblem -->
+    <rect id="bg" width="200" height="200" rx="36" fill="#1b212d"/>
   </defs>
 
-  <g transform="translate(100, 100)" filter="url(#gearShadow)">
-    <!-- 12-Teeth Precision Industrial Gear -->
+  <!-- Dark Slate Background Box -->
+  <rect width="200" height="200" rx="36" fill="#1b212d" />
+
+  <!-- Gear & Hole Group -->
+  <g>
+    <!-- White 10-Tooth Industrial Gear with Inner Hole (Masked / Compound Path) -->
     <path 
       d="
-        M -16,-82 L 16,-82 L 14,-65 
-        A 66 66 0 0 1 45,-47 L 60,-57 L 80,-34 L 66,-21 
-        A 66 66 0 0 1 73,15 L 89,26 L 79,53 L 57,47 
-        A 66 66 0 0 1 31,70 L 31,90 L -2,92 L -10,71 
-        A 66 66 0 0 1 -45,53 L -63,68 L -82,46 L -68,30 
-        A 66 66 0 0 1 -72,-9 L -92,-17 L -86,-47 L -63,-42 
-        A 66 66 0 0 1 -39,-62 L -34,-80 Z
+        M 90.93 42.71 L 91.85 22.43 L 108.15 22.43 L 109.07 42.71 
+        L 126.33 48.32 L 139.00 32.45 L 152.19 42.03 L 141.01 58.99 
+        L 151.68 73.67 L 171.26 68.27 L 176.30 83.78 L 157.29 90.93 
+        L 157.29 109.07 L 176.30 116.22 L 171.26 131.73 L 151.68 126.33 
+        L 141.01 141.01 L 152.19 157.97 L 139.00 167.55 L 126.33 151.68 
+        L 109.07 157.29 L 108.15 177.57 L 91.85 177.57 L 90.93 157.29 
+        L 73.67 151.68 L 61.00 167.55 L 47.81 157.97 L 58.99 141.01 
+        L 48.32 126.33 L 28.74 131.73 L 23.70 116.22 L 42.71 109.07 
+        L 42.71 90.93 L 23.70 83.78 L 28.74 68.27 L 48.32 73.67 
+        L 58.99 58.99 L 47.81 42.03 L 61.00 32.45 L 73.67 48.32 Z
+        M 100 60
+        A 40 40 0 1 0 100 140
+        A 40 40 0 1 0 100 60 Z
       " 
-      fill="url(#gearMetalGrad)" 
-      stroke="#94a3b8" 
-      stroke-width="3" 
-      stroke-linejoin="round"
-    />
-
-    <!-- Inner Gear Hole Ring -->
-    <circle cx="-1" cy="4" r="42" fill="none" stroke="#94a3b8" stroke-width="3" />
-
-    <!-- Center Lightning Bolt (Cutting through Gear) -->
-    <polygon 
-      points="
-        12,-90 
-        -28,-8 
-        3,-8 
-        -48,92 
-        52,-18 
-        18,-18
-      " 
-      fill="url(#gearBoltGrad)" 
-      stroke="#ca8a04" 
-      stroke-width="2.5"
-      stroke-linejoin="miter"
+      fill="#f4f6f8" 
+      fill-rule="evenodd"
     />
   </g>
+
+  <!-- Yellow Electric Lightning Bolt overlapping Gear -->
+  <polygon 
+    points="
+      112,14 
+      148,38 
+      112,72 
+      138,72 
+      92,126 
+      116,126 
+      55,184 
+      82,118 
+      64,118 
+      86,64 
+      66,64
+    " 
+    fill="#ffd500" 
+  />
 </svg>
