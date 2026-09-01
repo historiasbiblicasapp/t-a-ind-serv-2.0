@@ -30,7 +30,11 @@ import {
   Layers,
   Truck,
   Receipt,
-  Percent
+  Percent,
+  UserCheck,
+  UserPlus,
+  Clock,
+  Briefcase
 } from 'lucide-react';
 
 interface WorkOrderDetailModalProps {
@@ -69,8 +73,11 @@ export const WorkOrderDetailModal: React.FC<WorkOrderDetailModalProps> = ({
     observation: ''
   });
 
-  const [newLaborEmployeeId, setNewLaborEmployeeId] = useState('');
-  const [newLaborHours, setNewLaborHours] = useState(4);
+  const [newLaborItemNumber, setNewLaborItemNumber] = useState<string>('');
+  const [newLaborEmployeeId, setNewLaborEmployeeId] = useState<string>('');
+  const [newLaborHours, setNewLaborHours] = useState<number>(4);
+  const [newLaborHourlyRate, setNewLaborHourlyRate] = useState<number>(0);
+  const [newLaborQty, setNewLaborQty] = useState<number>(1);
 
   const [newResource, setNewResource] = useState<Partial<WorkOrderResource>>({
     type: 'Ferramenta',
@@ -148,8 +155,12 @@ export const WorkOrderDetailModal: React.FC<WorkOrderDetailModalProps> = ({
 
   // Helper to persist work order updates with auto-sync
   const updateOrder = (partial: Partial<WorkOrder>) => {
-    const currentLaborCost = (partial.labor || workOrder.labor || []).reduce((acc, curr) => acc + (curr.totalValue || 0), 0);
-    const currentResourcesCost = (partial.resources || workOrder.resources || []).reduce((acc, curr) => acc + (curr.totalCost || 0), 0);
+    const nextLabor = partial.labor !== undefined ? partial.labor : (workOrder.labor || []);
+    const nextResources = partial.resources !== undefined ? partial.resources : (workOrder.resources || []);
+    const nextScope = partial.scope !== undefined ? partial.scope : (workOrder.scope || []);
+
+    const currentLaborCost = nextLabor.reduce((acc, curr) => acc + (Number(curr.totalValue) || (Number(curr.hours) * Number(curr.hourlyRate) * (Number(curr.quantity) || 1)) || 0), 0);
+    const currentResourcesCost = nextResources.reduce((acc, curr) => acc + (Number(curr.totalCost) || 0), 0);
 
     const newValues = recalculateValues(
       partial.values || workOrder.values || {
@@ -174,6 +185,9 @@ export const WorkOrderDetailModal: React.FC<WorkOrderDetailModalProps> = ({
     const updated: WorkOrder = {
       ...workOrder,
       ...partial,
+      labor: nextLabor,
+      resources: nextResources,
+      scope: nextScope,
       values: newValues,
       updatedAt: new Date().toISOString()
     };
@@ -196,6 +210,7 @@ export const WorkOrderDetailModal: React.FC<WorkOrderDetailModalProps> = ({
       peopleCount: people,
       startDate: newScope.startDate || `${workOrder.date} 08:00`,
       endDate: newScope.endDate || `${workOrder.deadlineDate} 17:00`,
+      responsibleId: newScope.responsibleId,
       responsibleName: newScope.responsibleName || workOrder.responsibleName,
       observation: newScope.observation
     };
@@ -223,14 +238,22 @@ export const WorkOrderDetailModal: React.FC<WorkOrderDetailModalProps> = ({
   const handleDeleteScope = (scopeId: string) => {
     const currentScope = workOrder.scope || [];
     const newScopeList = currentScope.filter(s => s.id !== scopeId);
-    const syncedLaborList = syncScopeToLabor(newScopeList, workOrder.labor || [], employees, positions);
     updateOrder({
-      scope: newScopeList,
-      labor: syncedLaborList
+      scope: newScopeList
     });
   };
 
   // 2. MÃO DE OBRA HANDLERS
+  const handleLaborEmployeeChange = (empId: string) => {
+    setNewLaborEmployeeId(empId);
+    if (empId) {
+      const { hourlyRate } = getEmployeePositionDetails(empId, employees, positions);
+      setNewLaborHourlyRate(hourlyRate || 75);
+    } else {
+      setNewLaborHourlyRate(0);
+    }
+  };
+
   const handleAddManualLabor = (e: React.FormEvent) => {
     e.preventDefault();
     if (!newLaborEmployeeId) return;
@@ -238,29 +261,134 @@ export const WorkOrderDetailModal: React.FC<WorkOrderDetailModalProps> = ({
     const emp = employees.find(e => e.id === newLaborEmployeeId);
     if (!emp) return;
 
-    const { positionName, hourlyRate, positionId } = getEmployeePositionDetails(emp.id, employees, positions);
+    const { positionName, hourlyRate: defaultRate, positionId } = getEmployeePositionDetails(emp.id, employees, positions);
+    const rate = newLaborHourlyRate > 0 ? Number(newLaborHourlyRate) : defaultRate;
     const hours = Number(newLaborHours) || 1;
-    const totalVal = hours * hourlyRate;
+    const qty = Number(newLaborQty) || 1;
+    const totalVal = qty * hours * rate;
 
     const currentLabor = workOrder.labor || [];
-    const createdLabor: WorkOrderLabor = {
-      id: generateUUID(),
-      itemNumber: String(currentLabor.length + 1).padStart(3, '0'),
-      quantity: 1,
-      positionId,
-      positionName,
-      employeeId: emp.id,
-      employeeName: emp.name,
-      hours,
-      hourlyRate,
-      totalValue: totalVal
-    };
+    const currentScope = workOrder.scope || [];
 
-    const updatedLabor = [...currentLabor, createdLabor];
-    updateOrder({ labor: updatedLabor });
+    // Find linked scope item if selected
+    const chosenItemNum = newLaborItemNumber || (currentScope[0]?.itemNumber || String(currentLabor.length + 1).padStart(3, '0'));
+    const linkedScope = currentScope.find(s => s.itemNumber === chosenItemNum);
+    const activityDesc = linkedScope?.description || (chosenItemNum ? `Atividade ${chosenItemNum}` : 'Geral / Apoio');
+
+    // Check if there is an unassigned / placeholder labor entry for this itemNumber
+    const placeholderIndex = currentLabor.findIndex(
+      l => l.itemNumber === chosenItemNum && (!l.employeeId || !l.employeeName || l.employeeName === 'A Definir' || l.employeeName === 'Não atribuído')
+    );
+
+    let updatedLabor: WorkOrderLabor[];
+    if (placeholderIndex >= 0) {
+      // Replace placeholder with the real technician
+      updatedLabor = currentLabor.map((l, idx) => {
+        if (idx === placeholderIndex) {
+          return {
+            ...l,
+            itemNumber: chosenItemNum,
+            activityDescription: activityDesc,
+            quantity: qty,
+            positionId,
+            positionName,
+            employeeId: emp.id,
+            employeeName: emp.name,
+            hours,
+            hourlyRate: rate,
+            totalValue: totalVal
+          };
+        }
+        return l;
+      });
+    } else {
+      // Append new labor item
+      const createdLabor: WorkOrderLabor = {
+        id: generateUUID(),
+        itemNumber: chosenItemNum,
+        activityDescription: activityDesc,
+        quantity: qty,
+        positionId,
+        positionName,
+        employeeId: emp.id,
+        employeeName: emp.name,
+        hours,
+        hourlyRate: rate,
+        totalValue: totalVal
+      };
+      updatedLabor = [...currentLabor, createdLabor];
+    }
+
+    // Also update scope item's responsible if it was unassigned
+    let updatedScope = currentScope;
+    if (linkedScope && (!linkedScope.responsibleId || !linkedScope.responsibleName)) {
+      updatedScope = currentScope.map(s => {
+        if (s.id === linkedScope.id) {
+          return {
+            ...s,
+            responsibleId: emp.id,
+            responsibleName: emp.name
+          };
+        }
+        return s;
+      });
+    }
+
+    updateOrder({
+      labor: updatedLabor,
+      scope: updatedScope
+    });
 
     setNewLaborEmployeeId('');
     setNewLaborHours(4);
+    setNewLaborHourlyRate(0);
+  };
+
+  const handleAssignTechnicianToLabor = (laborId: string, employeeId: string) => {
+    if (!employeeId) return;
+    const emp = employees.find(e => e.id === employeeId);
+    if (!emp) return;
+
+    const { positionName, hourlyRate, positionId } = getEmployeePositionDetails(emp.id, employees, positions);
+    const currentLabor = workOrder.labor || [];
+
+    const updatedLabor = currentLabor.map(l => {
+      if (l.id === laborId) {
+        const hours = Number(l.hours) || 4;
+        const qty = Number(l.quantity) || 1;
+        const rate = hourlyRate || Number(l.hourlyRate) || 75;
+        return {
+          ...l,
+          employeeId: emp.id,
+          employeeName: emp.name,
+          positionId,
+          positionName,
+          hourlyRate: rate,
+          totalValue: qty * hours * rate
+        };
+      }
+      return l;
+    });
+
+    updateOrder({ labor: updatedLabor });
+  };
+
+  const handleUpdateLaborHours = (laborId: string, delta: number) => {
+    const currentLabor = workOrder.labor || [];
+    const updatedLabor = currentLabor.map(l => {
+      if (l.id === laborId) {
+        const newHours = Math.max(0.5, (Number(l.hours) || 4) + delta);
+        const qty = Number(l.quantity) || 1;
+        const rate = Number(l.hourlyRate) || 0;
+        return {
+          ...l,
+          hours: newHours,
+          totalValue: qty * newHours * rate
+        };
+      }
+      return l;
+    });
+    updateOrder({ labor: updatedLabor });
   };
 
   const handleDeleteLabor = (laborId: string) => {
@@ -617,95 +745,264 @@ export const WorkOrderDetailModal: React.FC<WorkOrderDetailModalProps> = ({
           {/* 1. MÃO DE OBRA */}
           {activeTab === 'labor' && (
             <div className="space-y-4">
-              <div className="flex items-center justify-between">
-                <h4 className="text-sm font-bold text-slate-100 uppercase tracking-wider">
-                  Mão de Obra e Especialistas Alocados
-                </h4>
-                <span className="text-xs font-mono font-bold text-emerald-400">
-                  Total: {formatCurrency(val.laborCost)}
-                </span>
+              <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2">
+                <div>
+                  <h4 className="text-sm font-bold text-slate-100 uppercase tracking-wider flex items-center gap-2">
+                    <Users className="w-4 h-4 text-amber-400" />
+                    Mão de Obra e Especialistas Alocados
+                  </h4>
+                  <p className="text-xs text-slate-400">
+                    Aloque os técnicos diretamente para as atividades do escopo com cálculo automático de horas e valores.
+                  </p>
+                </div>
+                <div className="flex items-center gap-3">
+                  <span className="text-xs font-semibold text-slate-400">
+                    {laborList.length} alocação(ões)
+                  </span>
+                  <span className="text-sm font-mono font-bold text-emerald-400 px-3 py-1 bg-emerald-500/10 border border-emerald-500/30 rounded-lg">
+                    Total: {formatCurrency(val.laborCost)}
+                  </span>
+                </div>
               </div>
 
-              {/* Add Labor Form */}
-              <form onSubmit={handleAddManualLabor} className="bg-slate-950/40 p-4 rounded-xl border border-slate-800 grid grid-cols-1 sm:grid-cols-12 gap-3">
-                <div className="sm:col-span-6">
-                  <label className="block text-[11px] font-semibold text-slate-400 uppercase mb-1">Profissional / Técnico *</label>
-                  <select
-                    value={newLaborEmployeeId}
-                    onChange={(e) => setNewLaborEmployeeId(e.target.value)}
-                    required
-                    className="w-full px-2.5 py-1.5 text-xs bg-slate-900 border border-slate-700 rounded-lg text-slate-100"
-                  >
-                    <option value="">Selecione um funcionário...</option>
-                    {employees.map((emp) => (
-                      <option key={emp.id} value={emp.id}>
-                        {emp.name} ({positions.find(p => p.id === emp.positionId)?.name || 'Técnico'})
-                      </option>
-                    ))}
-                  </select>
+              {/* Add / Allocate Labor Form */}
+              <form onSubmit={handleAddManualLabor} className="bg-slate-950/60 p-4 rounded-xl border border-slate-800 space-y-3">
+                <div className="text-[11px] font-bold text-slate-400 uppercase tracking-wider flex items-center gap-1.5">
+                  <UserPlus className="w-3.5 h-3.5 text-amber-400" />
+                  Alocar Profissional para Atividade
                 </div>
 
-                <div className="sm:col-span-3">
-                  <label className="block text-[11px] font-semibold text-slate-400 uppercase mb-1">Horas Previstas</label>
-                  <input
-                    type="number"
-                    min="1"
-                    step="0.5"
-                    value={newLaborHours}
-                    onChange={(e) => setNewLaborHours(Number(e.target.value))}
-                    className="w-full px-2.5 py-1.5 text-xs bg-slate-900 border border-slate-700 rounded-lg text-slate-100 text-center font-mono"
-                  />
+                <div className="grid grid-cols-1 sm:grid-cols-12 gap-3">
+                  {/* 1. Atividade / Escopo */}
+                  <div className="sm:col-span-5">
+                    <label className="block text-[11px] font-semibold text-slate-300 mb-1">
+                      Atividade / Item do Escopo *
+                    </label>
+                    <select
+                      id="labor-scope-item-select"
+                      value={newLaborItemNumber}
+                      onChange={(e) => setNewLaborItemNumber(e.target.value)}
+                      className="w-full px-2.5 py-2 text-xs bg-slate-900 border border-slate-700 rounded-lg text-slate-100 focus:outline-none focus:border-amber-400 transition-colors"
+                    >
+                      {scopeList.length === 0 && (
+                        <option value="001">Item 001 — Atividade Principal</option>
+                      )}
+                      {scopeList.map((sc) => (
+                        <option key={sc.id} value={sc.itemNumber}>
+                          Item {sc.itemNumber} — {sc.description.length > 40 ? sc.description.substring(0, 40) + '...' : sc.description}
+                        </option>
+                      ))}
+                      <option value="GERAL">Geral / Apoio Operacional</option>
+                    </select>
+                  </div>
+
+                  {/* 2. Profissional / Técnico */}
+                  <div className="sm:col-span-7">
+                    <label className="block text-[11px] font-semibold text-slate-300 mb-1">
+                      Profissional / Técnico Especialista *
+                    </label>
+                    <select
+                      id="labor-employee-select"
+                      value={newLaborEmployeeId}
+                      onChange={(e) => handleLaborEmployeeChange(e.target.value)}
+                      required
+                      className="w-full px-2.5 py-2 text-xs bg-slate-900 border border-slate-700 rounded-lg text-slate-100 focus:outline-none focus:border-amber-400 transition-colors"
+                    >
+                      <option value="">Selecione um funcionário...</option>
+                      {employees.map((emp) => {
+                        const { positionName, hourlyRate } = getEmployeePositionDetails(emp.id, employees, positions);
+                        return (
+                          <option key={emp.id} value={emp.id}>
+                            {emp.name} • {positionName} ({formatCurrency(hourlyRate)}/h)
+                          </option>
+                        );
+                      })}
+                    </select>
+                  </div>
                 </div>
 
-                <div className="sm:col-span-3 flex items-end">
-                  <button
-                    type="submit"
-                    className="w-full flex items-center justify-center gap-1.5 py-1.5 text-xs font-bold bg-amber-500 hover:bg-amber-400 text-slate-950 rounded-lg transition-colors"
-                  >
-                    <Plus className="w-3.5 h-3.5" />
-                    Adicionar
-                  </button>
+                <div className="grid grid-cols-2 sm:grid-cols-12 gap-3 items-end">
+                  {/* 3. Horas Previstas */}
+                  <div className="sm:col-span-3">
+                    <label className="block text-[11px] font-semibold text-slate-300 mb-1">
+                      Horas Previstas
+                    </label>
+                    <input
+                      id="labor-hours-input"
+                      type="number"
+                      min="0.5"
+                      step="0.5"
+                      value={newLaborHours}
+                      onChange={(e) => setNewLaborHours(Number(e.target.value))}
+                      className="w-full px-2.5 py-2 text-xs bg-slate-900 border border-slate-700 rounded-lg text-slate-100 text-center font-mono focus:outline-none focus:border-amber-400"
+                    />
+                  </div>
+
+                  {/* 4. Valor Hora (R$) */}
+                  <div className="sm:col-span-3">
+                    <label className="block text-[11px] font-semibold text-slate-300 mb-1">
+                      Taxa Horária (R$)
+                    </label>
+                    <input
+                      id="labor-rate-input"
+                      type="number"
+                      min="0"
+                      step="1"
+                      value={newLaborHourlyRate || ''}
+                      onChange={(e) => setNewLaborHourlyRate(Number(e.target.value))}
+                      placeholder="R$/h"
+                      className="w-full px-2.5 py-2 text-xs bg-slate-900 border border-slate-700 rounded-lg text-slate-100 text-center font-mono focus:outline-none focus:border-amber-400"
+                    />
+                  </div>
+
+                  {/* 5. Subtotal Preview */}
+                  <div className="sm:col-span-3 flex items-center h-9 px-3 bg-slate-900/80 rounded-lg border border-slate-800">
+                    <span className="text-[11px] text-slate-400 font-medium mr-1.5">Subtotal:</span>
+                    <span className="text-xs font-mono font-bold text-emerald-400">
+                      {formatCurrency((Number(newLaborHours) || 0) * (Number(newLaborHourlyRate) || 0))}
+                    </span>
+                  </div>
+
+                  {/* 6. Botão Alocar */}
+                  <div className="sm:col-span-3">
+                    <button
+                      id="labor-submit-btn"
+                      type="submit"
+                      className="w-full flex items-center justify-center gap-1.5 py-2 text-xs font-bold bg-amber-500 hover:bg-amber-400 active:scale-98 text-slate-950 rounded-lg transition-all shadow-sm"
+                    >
+                      <UserCheck className="w-4 h-4" />
+                      Alocar Técnico
+                    </button>
+                  </div>
                 </div>
               </form>
 
               {/* Labor List */}
-              <div className="space-y-2">
+              <div className="space-y-2.5">
                 {laborList.length === 0 ? (
-                  <div className="p-8 text-center text-xs text-slate-500 bg-slate-950/40 rounded-xl border border-slate-800">
-                    Nenhum profissional alocado nesta Ordem de Serviço.
+                  <div className="p-8 text-center text-xs text-slate-500 bg-slate-950/40 rounded-xl border border-slate-800 space-y-2">
+                    <Users className="w-8 h-8 mx-auto text-slate-600 opacity-60" />
+                    <p className="font-medium text-slate-400">Nenhum profissional alocado nesta Ordem de Serviço.</p>
+                    <p className="text-[11px] text-slate-500">
+                      Utilize o formulário acima para alocar técnicos e especialistas às tarefas do escopo.
+                    </p>
                   </div>
                 ) : (
-                  laborList.map((lb) => (
-                    <div
-                      key={lb.id}
-                      className="p-3.5 rounded-xl bg-slate-900/90 border border-slate-800 flex items-center justify-between gap-3"
-                    >
-                      <div className="flex items-center gap-3">
-                        <span className="px-2.5 py-1 bg-amber-500/10 text-amber-400 border border-amber-500/30 rounded font-mono font-bold text-xs">
-                          {lb.itemNumber}
-                        </span>
-                        <div>
-                          <p className="text-xs font-semibold text-slate-100">{lb.employeeName || 'A Definir'}</p>
-                          <p className="text-[11px] text-slate-400">
-                            {lb.positionName} • {lb.hours}h @ {formatCurrency(lb.hourlyRate)}/h
-                          </p>
+                  laborList.map((lb) => {
+                    const isUnassigned = !lb.employeeName || lb.employeeName === 'A Definir' || lb.employeeName === 'Não atribuído';
+                    const matchedScope = scopeList.find(s => s.itemNumber === lb.itemNumber);
+                    const activityLabel = lb.activityDescription || matchedScope?.description || (lb.itemNumber === 'GERAL' ? 'Apoio Geral' : `Atividade ${lb.itemNumber}`);
+
+                    return (
+                      <div
+                        key={lb.id}
+                        className={`p-3.5 rounded-xl border transition-all ${
+                          isUnassigned
+                            ? 'bg-amber-500/5 border-amber-500/30 hover:border-amber-500/50'
+                            : 'bg-slate-900/90 border-slate-800 hover:border-slate-700'
+                        }`}
+                      >
+                        <div className="flex flex-col md:flex-row md:items-center justify-between gap-3">
+                          {/* Left Section: Badges & Technician Info */}
+                          <div className="flex items-start sm:items-center gap-3">
+                            <span className="px-2.5 py-1 bg-amber-500/15 text-amber-400 border border-amber-500/30 rounded font-mono font-bold text-xs shrink-0">
+                              Item {lb.itemNumber}
+                            </span>
+
+                            <div className="space-y-1">
+                              <div className="flex flex-wrap items-center gap-2">
+                                {isUnassigned ? (
+                                  <span className="text-xs font-bold text-amber-300 flex items-center gap-1">
+                                    <Clock className="w-3.5 h-3.5" />
+                                    A Definir (Pendente de Atribuição)
+                                  </span>
+                                ) : (
+                                  <span className="text-xs font-bold text-slate-100 flex items-center gap-1.5">
+                                    <UserCheck className="w-3.5 h-3.5 text-emerald-400" />
+                                    {lb.employeeName}
+                                  </span>
+                                )}
+
+                                <span className="px-2 py-0.5 text-[10px] bg-slate-800 text-slate-300 rounded border border-slate-700 font-medium">
+                                  {lb.positionName || 'Técnico Especialista'}
+                                </span>
+
+                                <span className="text-[11px] text-slate-400 bg-slate-950/60 px-2 py-0.5 rounded border border-slate-800/80">
+                                  {activityLabel}
+                                </span>
+                              </div>
+
+                              <p className="text-[11px] text-slate-400">
+                                {lb.quantity > 1 ? `${lb.quantity}x ` : ''}
+                                {lb.hours}h previstas • Taxa: {formatCurrency(lb.hourlyRate)}/h
+                              </p>
+                            </div>
+                          </div>
+
+                          {/* Right Section: Inline Assignment or Calculation + Delete Action */}
+                          <div className="flex flex-wrap items-center justify-between md:justify-end gap-3 pt-2 md:pt-0 border-t md:border-t-0 border-slate-800/60">
+                            {/* If unassigned, show quick employee selector */}
+                            {isUnassigned ? (
+                              <div className="flex items-center gap-2">
+                                <select
+                                  id={`assign-tech-select-${lb.id}`}
+                                  onChange={(e) => handleAssignTechnicianToLabor(lb.id, e.target.value)}
+                                  defaultValue=""
+                                  className="px-2.5 py-1.5 text-xs bg-slate-950 border border-amber-500/40 rounded-lg text-slate-200 focus:outline-none focus:border-amber-400"
+                                >
+                                  <option value="">Atribuir Técnico Agora...</option>
+                                  {employees.map((emp) => (
+                                    <option key={emp.id} value={emp.id}>
+                                      {emp.name} ({getEmployeePositionDetails(emp.id, employees, positions).positionName})
+                                    </option>
+                                  ))}
+                                </select>
+                              </div>
+                            ) : (
+                              /* Quick Hour Adjustment Buttons */
+                              <div className="flex items-center gap-1 bg-slate-950/80 rounded-lg p-1 border border-slate-800">
+                                <button
+                                  type="button"
+                                  onClick={() => handleUpdateLaborHours(lb.id, -0.5)}
+                                  className="w-6 h-6 flex items-center justify-center text-xs font-bold text-slate-400 hover:text-amber-400 hover:bg-slate-800 rounded transition-colors"
+                                  title="Diminuir 30min"
+                                >
+                                  -
+                                </button>
+                                <span className="px-2 text-xs font-mono text-slate-200 font-bold">
+                                  {lb.hours}h
+                                </span>
+                                <button
+                                  type="button"
+                                  onClick={() => handleUpdateLaborHours(lb.id, 0.5)}
+                                  className="w-6 h-6 flex items-center justify-center text-xs font-bold text-slate-400 hover:text-amber-400 hover:bg-slate-800 rounded transition-colors"
+                                  title="Aumentar 30min"
+                                >
+                                  +
+                                </button>
+                              </div>
+                            )}
+
+                            {/* Total Value */}
+                            <span className="text-xs font-mono font-bold text-emerald-400 min-w-[70px] text-right">
+                              {formatCurrency(lb.totalValue || (lb.hours * lb.hourlyRate * (lb.quantity || 1)))}
+                            </span>
+
+                            {/* Functional Delete Button with explicit touch target & hover */}
+                            <button
+                              id={`delete-labor-btn-${lb.id}`}
+                              type="button"
+                              onClick={() => handleDeleteLabor(lb.id)}
+                              className="p-2 text-slate-400 hover:text-rose-400 hover:bg-rose-500/15 active:scale-95 rounded-lg border border-slate-700/60 hover:border-rose-500/40 transition-all flex items-center justify-center"
+                              title="Remover Mão de Obra"
+                            >
+                              <Trash2 className="w-4 h-4" />
+                            </button>
+                          </div>
                         </div>
                       </div>
-
-                      <div className="flex items-center gap-4">
-                        <span className="text-xs font-mono font-bold text-emerald-400">
-                          {formatCurrency(lb.totalValue)}
-                        </span>
-                        <button
-                          onClick={() => handleDeleteLabor(lb.id)}
-                          className="p-1 text-slate-500 hover:text-rose-400 rounded transition-colors"
-                          title="Remover Mão de Obra"
-                        >
-                          <Trash2 className="w-4 h-4" />
-                        </button>
-                      </div>
-                    </div>
-                  ))
+                    );
+                  })
                 )}
               </div>
             </div>
@@ -839,8 +1136,10 @@ export const WorkOrderDetailModal: React.FC<WorkOrderDetailModalProps> = ({
                       </div>
 
                       <button
+                        id={`delete-scope-btn-${sc.id}`}
+                        type="button"
                         onClick={() => handleDeleteScope(sc.id)}
-                        className="p-1 text-slate-500 hover:text-rose-400 rounded transition-colors"
+                        className="p-2 text-slate-400 hover:text-rose-400 hover:bg-rose-500/15 active:scale-95 rounded-lg border border-slate-700/60 hover:border-rose-500/40 transition-all flex items-center justify-center shrink-0"
                         title="Excluir Item de Escopo"
                       >
                         <Trash2 className="w-4 h-4" />
@@ -967,8 +1266,11 @@ export const WorkOrderDetailModal: React.FC<WorkOrderDetailModalProps> = ({
                           {formatCurrency(rec.totalCost)}
                         </span>
                         <button
+                          id={`delete-resource-btn-${rec.id}`}
+                          type="button"
                           onClick={() => handleDeleteResource(rec.id)}
-                          className="p-1 text-slate-500 hover:text-rose-400 rounded transition-colors"
+                          className="p-2 text-slate-400 hover:text-rose-400 hover:bg-rose-500/15 active:scale-95 rounded-lg border border-slate-700/60 hover:border-rose-500/40 transition-all flex items-center justify-center shrink-0"
+                          title="Remover Recurso"
                         >
                           <Trash2 className="w-4 h-4" />
                         </button>

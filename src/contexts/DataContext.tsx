@@ -149,12 +149,17 @@ export const DataProvider: React.FC<{ children: React.ReactNode }> = ({ children
   const saveWorkOrder = (order: WorkOrder) => {
     const isNew = !workOrders.some(w => w.id === order.id);
 
-    // Apply mandatory Escopo -> Mão de Obra sync
-    const syncedLabor = syncScopeToLabor(order.scope, order.labor, employees, positions);
+    // Synchronize initial labor only if creating a new order with scope items and no labor specified
+    let currentLabor = order.labor;
+    if (isNew && (!currentLabor || currentLabor.length === 0) && order.scope && order.scope.length > 0) {
+      currentLabor = syncScopeToLabor(order.scope, [], employees, positions);
+    } else {
+      currentLabor = currentLabor || [];
+    }
 
     // Calculate labor and resources total cost
-    const totalLaborCost = syncedLabor.reduce((acc, curr) => acc + curr.totalValue, 0);
-    const totalResourcesCost = order.resources.reduce((acc, curr) => acc + curr.totalCost, 0);
+    const totalLaborCost = currentLabor.reduce((acc, curr) => acc + (Number(curr.totalValue) || (Number(curr.hours) * Number(curr.hourlyRate) * (Number(curr.quantity) || 1)) || 0), 0);
+    const totalResourcesCost = (order.resources || []).reduce((acc, curr) => acc + (Number(curr.totalCost) || 0), 0);
 
     // Calculate Travel / Displacement Cost
     const travelDistance = Number(order.values?.travelDistanceKm) || 0;
@@ -195,7 +200,7 @@ export const DataProvider: React.FC<{ children: React.ReactNode }> = ({ children
 
     const finalOrder: WorkOrder = {
       ...order,
-      labor: syncedLabor,
+      labor: currentLabor,
       values: calculatedValues,
       updatedAt: new Date().toISOString()
     };

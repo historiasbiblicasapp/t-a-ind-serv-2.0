@@ -35,8 +35,9 @@ export interface WorkOrderScope {
 
 export interface WorkOrderLabor {
   id: string;
-  itemNumber: string; // Preenchido automaticamente pelo Escopo (ex: "001")
-  quantity: number;   // Preenchido automaticamente pelo Escopo (ex: 2)
+  itemNumber: string; // Vínculo com o Item do Escopo (ex: "001")
+  activityDescription?: string; // Descrição da Atividade / Tarefa Vinculada
+  quantity: number;   // Qtd de profissionais
   employeeId: string;
   employeeName: string;
   positionId?: string;

@@ -2,13 +2,13 @@ import { WorkOrderScope, WorkOrderLabor, Employee, Position } from '../types';
 import { generateUUID } from './utils';
 
 /**
- * REGRA ESPECIAL OBRIGATÓRIA: ESCOPO → MÃO DE OBRA
+ * SINCRONIZAÇÃO ESCOPO → MÃO DE OBRA
  * 
  * Regra:
- * 1. Cada item do Escopo (Nº itemNumber e Qtd Pessoas peopleCount) sincroniza automaticamente
- *    com a tabela de Mão de Obra (Item itemNumber e Qtd quantity).
- * 2. Quando um funcionário é associado ou selecionado, seu cargo (Cargo) e valor hora
- *    são preenchidos automaticamente com base no cadastro de Funcionários e Cargos (cargo_id).
+ * 1. Preserva todos os técnicos já alocados manualmente.
+ * 2. Quando um novo item de escopo possui responsável técnico definido, 
+ *    cria automaticamente o registro de mão de obra vinculado ao item do escopo.
+ * 3. Garante que os cargos e valores-hora venham sempre sincronizados com os dados reais dos Funcionários e Cargos.
  */
 export function syncScopeToLabor(
   scopes: WorkOrderScope[],
@@ -16,71 +16,45 @@ export function syncScopeToLabor(
   employees: Employee[],
   positions: Position[]
 ): WorkOrderLabor[] {
-  const updatedLabors: WorkOrderLabor[] = [];
+  const resultLabors: WorkOrderLabor[] = [...(currentLabors || [])];
 
-  scopes.forEach((scope, index) => {
-    // Busca registro existente de mão de obra para este número de item ou posição
-    const existingLabor = currentLabors.find(l => l.itemNumber === scope.itemNumber) || currentLabors[index];
+  (scopes || []).forEach((scope, index) => {
+    const itemNum = scope.itemNumber || String(index + 1).padStart(3, '0');
+    const existingIndex = resultLabors.findIndex(l => l.itemNumber === itemNum);
 
-    let employeeId = existingLabor?.employeeId || '';
-    let employeeName = existingLabor?.employeeName || '';
-    let positionId = existingLabor?.positionId || '';
-    let positionName = existingLabor?.positionName || '';
-    let hourlyRate = existingLabor?.hourlyRate || 0;
-    const hours = existingLabor?.hours ?? 4.0;
-    const quantity = scope.peopleCount > 0 ? scope.peopleCount : 1;
-
-    // Se houver responsável no escopo e nenhum funcionário selecionado ainda
-    if (!employeeId && scope.responsibleId) {
-      const respEmp = employees.find(e => e.id === scope.responsibleId);
-      if (respEmp) {
-        employeeId = respEmp.id;
-        employeeName = respEmp.name;
-        positionId = respEmp.cargo_id;
-        positionName = respEmp.positionName;
-        hourlyRate = respEmp.hourlyRate;
+    // Se já existe um labor para este item, atualiza a descrição da atividade vinculada se faltar
+    if (existingIndex >= 0) {
+      if (!resultLabors[existingIndex].activityDescription) {
+        resultLabors[existingIndex].activityDescription = scope.description;
       }
+    } else if (scope.responsibleId) {
+      // Se não existe e o escopo possui técnico responsável indicado
+      const { positionName, hourlyRate, positionId } = getEmployeePositionDetails(
+        scope.responsibleId,
+        employees,
+        positions
+      );
+      const emp = employees.find(e => e.id === scope.responsibleId);
+      const hours = 4.0;
+      const qty = scope.peopleCount > 0 ? scope.peopleCount : 1;
+
+      resultLabors.push({
+        id: generateUUID(),
+        itemNumber: itemNum,
+        activityDescription: scope.description,
+        quantity: qty,
+        employeeId: scope.responsibleId,
+        employeeName: emp?.name || scope.responsibleName || 'Técnico Especialista',
+        positionId,
+        positionName,
+        hours,
+        hourlyRate,
+        totalValue: qty * hours * hourlyRate
+      });
     }
-
-    // Se houver funcionário selecionado, garante que o cargo_id e nome do cargo estejam sincronizados
-    if (employeeId) {
-      const emp = employees.find(e => e.id === employeeId);
-      if (emp) {
-        employeeName = emp.name;
-        positionId = emp.cargo_id;
-        positionName = emp.positionName;
-        if (hourlyRate <= 0) {
-          hourlyRate = emp.hourlyRate;
-        }
-      }
-    }
-
-    // Se ainda não tiver valor hora, tenta buscar pelo cargo
-    if (positionId && hourlyRate <= 0) {
-      const pos = positions.find(p => p.id === positionId);
-      if (pos) {
-        positionName = pos.name;
-        hourlyRate = pos.baseHourlyRate;
-      }
-    }
-
-    const totalValue = quantity * hours * hourlyRate;
-
-    updatedLabors.push({
-      id: existingLabor?.id || generateUUID(),
-      itemNumber: scope.itemNumber || String(index + 1).padStart(3, '0'),
-      quantity: quantity,
-      employeeId,
-      employeeName,
-      positionId,
-      positionName: positionName || 'Técnico Especialista',
-      hours,
-      hourlyRate,
-      totalValue
-    });
   });
 
-  return updatedLabors;
+  return resultLabors;
 }
 
 /**
@@ -97,23 +71,27 @@ export function getEmployeePositionDetails(
 } {
   const emp = employees.find(e => e.id === employeeId);
   if (!emp) {
-    return { positionId: '', positionName: '', hourlyRate: 0 };
+    return { positionId: '', positionName: 'Técnico Especialista', hourlyRate: 75.0 };
   }
 
   let positionName = emp.positionName;
   let hourlyRate = emp.hourlyRate;
+  const cargoId = emp.cargo_id || (emp as any).positionId || '';
 
-  if (emp.cargo_id) {
-    const pos = positions.find(p => p.id === emp.cargo_id);
+  if (cargoId) {
+    const pos = positions.find(p => p.id === cargoId);
     if (pos) {
-      positionName = pos.name;
-      if (!hourlyRate) hourlyRate = pos.baseHourlyRate;
+      if (!positionName) positionName = pos.name;
+      if (!hourlyRate || hourlyRate <= 0) {
+        hourlyRate = pos.baseHourlyRate || pos.defaultHourlyRate || 75.0;
+      }
     }
   }
 
   return {
-    positionId: emp.cargo_id,
-    positionName: positionName || 'Não especificado',
+    positionId: cargoId,
+    positionName: positionName || 'Técnico Especialista',
     hourlyRate: hourlyRate || 75.0
   };
 }
+
