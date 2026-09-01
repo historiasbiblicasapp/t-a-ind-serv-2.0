@@ -31,11 +31,15 @@ const MainAppContent: React.FC = () => {
 
   // Global Modal States
   const [isNewOrderModalOpen, setIsNewOrderModalOpen] = useState(false);
-  const [selectedOrder, setSelectedOrder] = useState<WorkOrder | null>(null);
+  const [selectedOrderId, setSelectedOrderId] = useState<string | null>(null);
+  const [editingOrder, setEditingOrder] = useState<WorkOrder | null>(null);
   const [printingOrder, setPrintingOrder] = useState<WorkOrder | null>(null);
   const [isQRScannerOpen, setIsQRScannerOpen] = useState(false);
 
   const { workOrders, equipment } = useData();
+
+  // Dynamically resolve selected order so updates to scope/resources/costs update reactively
+  const activeSelectedOrder = workOrders.find((w) => w.id === selectedOrderId) || null;
 
   // If not authenticated, display full-screen Login View
   if (!isAuthenticated) {
@@ -43,7 +47,16 @@ const MainAppContent: React.FC = () => {
   }
 
   const handleSelectWorkOrder = (order: WorkOrder) => {
-    setSelectedOrder(order);
+    setSelectedOrderId(order.id);
+  };
+
+  const handleEditWorkOrder = (order: WorkOrder) => {
+    setSelectedOrderId(null);
+    setEditingOrder(order);
+  };
+
+  const handlePrintWorkOrder = (order: WorkOrder) => {
+    setPrintingOrder(order);
   };
 
   const handleQRScanResult = (decodedText: string) => {
@@ -54,7 +67,7 @@ const MainAppContent: React.FC = () => {
     );
 
     if (foundWO) {
-      setSelectedOrder(foundWO);
+      setSelectedOrderId(foundWO.id);
       setIsQRScannerOpen(false);
       return;
     }
@@ -110,6 +123,8 @@ const MainAppContent: React.FC = () => {
             {currentPage === 'work-orders' && (
               <WorkOrdersView
                 onSelectWorkOrder={handleSelectWorkOrder}
+                onEditWorkOrder={handleEditWorkOrder}
+                onPrintWorkOrder={handlePrintWorkOrder}
                 onOpenNewWorkOrder={() => setIsNewOrderModalOpen(true)}
               />
             )}
@@ -123,7 +138,10 @@ const MainAppContent: React.FC = () => {
             )}
 
             {currentPage === 'planning' && (
-              <PlanningView onSelectWorkOrder={handleSelectWorkOrder} />
+              <PlanningView
+                onSelectWorkOrder={handleSelectWorkOrder}
+                onEditWorkOrder={handleEditWorkOrder}
+              />
             )}
 
             {currentPage === 'inventory' && <InventoryView />}
@@ -161,29 +179,33 @@ const MainAppContent: React.FC = () => {
         </main>
       </div>
 
-      {/* New Work Order Form Modal */}
-      {isNewOrderModalOpen && (
+      {/* New or Edit Work Order Form Modal */}
+      {(isNewOrderModalOpen || Boolean(editingOrder)) && (
         <WorkOrderFormModal
-          isOpen={isNewOrderModalOpen}
-          onClose={() => setIsNewOrderModalOpen(false)}
+          isOpen={isNewOrderModalOpen || Boolean(editingOrder)}
+          onClose={() => {
+            setIsNewOrderModalOpen(false);
+            setEditingOrder(null);
+          }}
+          initialData={editingOrder}
         />
       )}
 
       {/* Work Order 6-Tab Detail Modal */}
-      {selectedOrder && (
+      {activeSelectedOrder && (
         <WorkOrderDetailModal
-          isOpen={Boolean(selectedOrder)}
-          onClose={() => setSelectedOrder(null)}
-          workOrder={selectedOrder}
-          onPrint={(wo) => {
-            setPrintingOrder(wo);
-          }}
+          isOpen={Boolean(activeSelectedOrder)}
+          onClose={() => setSelectedOrderId(null)}
+          workOrder={activeSelectedOrder}
+          onEdit={(wo) => handleEditWorkOrder(wo)}
+          onPrint={(wo) => handlePrintWorkOrder(wo)}
         />
       )}
 
       {/* Work Order High-Resolution Print/PDF View */}
       {printingOrder && (
         <WorkOrderPrintView
+          isOpen={Boolean(printingOrder)}
           workOrder={printingOrder}
           onClose={() => setPrintingOrder(null)}
         />

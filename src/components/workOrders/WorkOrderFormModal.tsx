@@ -105,14 +105,17 @@ export const WorkOrderFormModal: React.FC<WorkOrderFormModalProps> = ({
     const selectedEq = equipment.find(e => e.id === equipmentId) || equipment[0];
     const selectedResp = employees.find(e => e.id === responsibleId);
 
-    const baseOrder: WorkOrder = initialData || {
+    const baseOrder: WorkOrder = initialData ? {
+      ...initialData,
+      updatedAt: new Date().toISOString()
+    } : {
       id: generateUUID(),
       orderNumber,
       requesterName,
       requesterId: currentUser?.id,
       date,
       time,
-      company,
+      company: company || 'T&A Industrial Service Ltda.',
       unit,
       department,
       area,
@@ -149,6 +152,12 @@ export const WorkOrderFormModal: React.FC<WorkOrderFormModalProps> = ({
         servicesCost: 0,
         resourcesCost: 0,
         additionalCosts: 0,
+        travelDistanceKm: 0,
+        travelRatePerKm: 2.50,
+        travelCost: 0,
+        taxPercent: 0,
+        taxAmount: 0,
+        subtotalCost: 0,
         totalCost: 0
       },
       milestones: [
@@ -165,18 +174,18 @@ export const WorkOrderFormModal: React.FC<WorkOrderFormModalProps> = ({
       requesterName,
       date,
       time,
-      company,
+      company: company || 'T&A Industrial Service Ltda.',
       unit,
       department,
       area,
-      equipmentId: selectedEq?.id || '',
-      equipmentCode: selectedEq?.code || 'EQ-00',
-      equipmentName: selectedEq?.name || 'Equipamento',
+      equipmentId: selectedEq?.id || baseOrder.equipmentId,
+      equipmentCode: selectedEq?.code || baseOrder.equipmentCode,
+      equipmentName: selectedEq?.name || baseOrder.equipmentName,
       type,
       priority,
       description,
-      responsibleId: selectedResp?.id,
-      responsibleName: selectedResp?.name || 'Não atribuído',
+      responsibleId: selectedResp?.id || baseOrder.responsibleId,
+      responsibleName: selectedResp?.name || baseOrder.responsibleName,
       status,
       deadlineDate,
       deadlineTime,
