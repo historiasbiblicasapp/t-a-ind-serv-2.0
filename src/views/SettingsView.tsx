@@ -1,10 +1,16 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { useData } from '../contexts/DataContext';
 import { useAuth } from '../contexts/AuthContext';
 import { supabaseFullDDL } from '../lib/databaseSchema';
 import { AppStorage } from '../lib/storage';
 import { DataTable, Column } from '../components/common/DataTable';
 import { AuditLog } from '../types';
+import {
+  getSupabaseConfig,
+  saveSupabaseConfig,
+  testSupabaseConnection,
+  sendTelemetryErrorToSupabase
+} from '../lib/supabase';
 import {
   Settings,
   Database,
@@ -16,16 +22,79 @@ import {
   Terminal,
   FileCode2,
   Lock,
-  Layers
+  Layers,
+  Link,
+  CheckCircle2,
+  AlertCircle,
+  Bug,
+  Send
 } from 'lucide-react';
 
 export const SettingsView: React.FC = () => {
   const { auditLogs, reloadAllData } = useData();
   const { currentUser, users, switchUser } = useAuth();
 
-  const [activeTab, setActiveTab] = useState<'database' | 'audit' | 'system'>('database');
+  const [activeTab, setActiveTab] = useState<'database' | 'connection' | 'audit' | 'system'>('connection');
   const [copied, setCopied] = useState(false);
   const [resetSuccess, setResetSuccess] = useState(false);
+
+  // Supabase credentials state
+  const [supabaseUrl, setSupabaseUrl] = useState('');
+  const [supabaseKey, setSupabaseKey] = useState('');
+  const [testingConnection, setTestingConnection] = useState(false);
+  const [testResult, setTestResult] = useState<{ success: boolean; message: string } | null>(null);
+  const [saveSuccess, setSaveSuccess] = useState(false);
+
+  // Error simulation for customer complaints
+  const [reportTitle, setReportTitle] = useState('');
+  const [reportDescription, setReportDescription] = useState('');
+  const [reportSending, setReportSending] = useState(false);
+  const [reportSent, setReportSent] = useState(false);
+
+  useEffect(() => {
+    const config = getSupabaseConfig();
+    setSupabaseUrl(config.url);
+    setSupabaseKey(config.anonKey);
+  }, []);
+
+  const handleSaveConnection = () => {
+    saveSupabaseConfig(supabaseUrl, supabaseKey);
+    setSaveSuccess(true);
+    setTimeout(() => setSaveSuccess(false), 3000);
+  };
+
+  const handleTestConnection = async () => {
+    setTestingConnection(true);
+    setTestResult(null);
+    const result = await testSupabaseConnection(supabaseUrl, supabaseKey);
+    setTestResult(result);
+    setTestingConnection(false);
+  };
+
+  const handleSendClientReport = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!reportTitle.trim() || !reportDescription.trim()) return;
+
+    setReportSending(true);
+    await sendTelemetryErrorToSupabase({
+      errorType: 'CLIENT_REPORT',
+      title: reportTitle.trim(),
+      message: reportDescription.trim(),
+      contextData: {
+        timestamp: new Date().toISOString(),
+        activeUser: currentUser
+      },
+      userEmail: currentUser?.email,
+      userName: currentUser?.name,
+      userRole: currentUser?.role
+    });
+
+    setReportSending(false);
+    setReportSent(true);
+    setReportTitle('');
+    setReportDescription('');
+    setTimeout(() => setReportSent(false), 4000);
+  };
 
   const handleCopyDDL = () => {
     navigator.clipboard.writeText(supabaseFullDDL);
@@ -101,10 +170,10 @@ export const SettingsView: React.FC = () => {
         <div>
           <h1 className="text-xl font-bold text-slate-100 flex items-center gap-2">
             <Settings className="w-5 h-5 text-amber-400" />
-            Configurações & Estrutura do Sistema
+            Configurações & Banco de Dados Supabase
           </h1>
           <p className="text-xs text-slate-400 mt-0.5">
-            Esquema PostgreSQL DDL para Supabase, trilhas de auditoria e parâmetros globais
+            Conexão com Supabase, sincronização em nuvem, relatório de falhas do cliente e DDL
           </p>
         </div>
 
@@ -125,7 +194,19 @@ export const SettingsView: React.FC = () => {
       )}
 
       {/* Tabs */}
-      <div className="flex items-center gap-2 border-b border-slate-800 pb-3">
+      <div className="flex flex-wrap items-center gap-2 border-b border-slate-800 pb-3">
+        <button
+          onClick={() => setActiveTab('connection')}
+          className={`px-4 py-2 text-xs font-bold rounded-lg border transition-colors flex items-center gap-2 ${
+            activeTab === 'connection'
+              ? 'bg-amber-500 text-slate-950 border-amber-400 shadow-md'
+              : 'bg-slate-900 text-slate-400 border-slate-800 hover:bg-slate-800'
+          }`}
+        >
+          <Link className="w-4 h-4" />
+          <span>Conexão Supabase & Logs de Erros</span>
+        </button>
+
         <button
           onClick={() => setActiveTab('database')}
           className={`px-4 py-2 text-xs font-bold rounded-lg border transition-colors flex items-center gap-2 ${
@@ -135,7 +216,7 @@ export const SettingsView: React.FC = () => {
           }`}
         >
           <Database className="w-4 h-4" />
-          <span>Esquema Supabase (SQL DDL)</span>
+          <span>Esquema SQL DDL</span>
         </button>
 
         <button
@@ -163,6 +244,159 @@ export const SettingsView: React.FC = () => {
         </button>
       </div>
 
+      {/* Connection Tab */}
+      {activeTab === 'connection' && (
+        <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+          {/* Supabase Config Form */}
+          <div className="bg-slate-900 border border-slate-800 rounded-xl p-5 space-y-4">
+            <div>
+              <h3 className="text-sm font-bold text-slate-100 flex items-center gap-2">
+                <Database className="w-4 h-4 text-amber-400" />
+                Credenciais do Projeto Supabase
+              </h3>
+              <p className="text-xs text-slate-400 mt-1 leading-relaxed">
+                Insira as credenciais do seu projeto Supabase para que todas as Ordens de Serviço, cadastros e erros reportados pelos clientes sejam enviados diretamente para o banco de dados em tempo real.
+              </p>
+            </div>
+
+            <div className="space-y-3">
+              <div>
+                <label className="block text-xs font-semibold text-slate-300 mb-1">
+                  Project URL (Ex: https://xxxx.supabase.co)
+                </label>
+                <input
+                  type="text"
+                  value={supabaseUrl}
+                  onChange={(e) => setSupabaseUrl(e.target.value)}
+                  placeholder="https://seu-projeto.supabase.co"
+                  className="w-full bg-slate-950 border border-slate-800 rounded-lg px-3 py-2 text-xs text-slate-100 font-mono focus:border-amber-400 focus:outline-none"
+                />
+              </div>
+
+              <div>
+                <label className="block text-xs font-semibold text-slate-300 mb-1">
+                  Anon / Public API Key (JWT)
+                </label>
+                <textarea
+                  rows={3}
+                  value={supabaseKey}
+                  onChange={(e) => setSupabaseKey(e.target.value)}
+                  placeholder="eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9..."
+                  className="w-full bg-slate-950 border border-slate-800 rounded-lg px-3 py-2 text-xs text-slate-100 font-mono focus:border-amber-400 focus:outline-none"
+                />
+              </div>
+
+              <div className="flex items-center gap-2 pt-2">
+                <button
+                  type="button"
+                  onClick={handleSaveConnection}
+                  className="px-4 py-2 bg-amber-500 hover:bg-amber-400 text-slate-950 text-xs font-bold rounded-lg transition-colors shadow-sm"
+                >
+                  Salvar Credenciais
+                </button>
+
+                <button
+                  type="button"
+                  onClick={handleTestConnection}
+                  disabled={testingConnection || !supabaseUrl || !supabaseKey}
+                  className="px-4 py-2 bg-slate-800 hover:bg-slate-700 text-slate-200 border border-slate-700 text-xs font-semibold rounded-lg transition-colors disabled:opacity-50"
+                >
+                  {testingConnection ? 'Testando Conexão...' : 'Testar Conexão'}
+                </button>
+              </div>
+
+              {saveSuccess && (
+                <div className="p-2.5 bg-emerald-950/40 border border-emerald-500/40 rounded-lg text-emerald-300 text-xs flex items-center gap-2">
+                  <CheckCircle2 className="w-4 h-4 text-emerald-400 shrink-0" />
+                  <span>Configurações do Supabase salvas com sucesso!</span>
+                </div>
+              )}
+
+              {testResult && (
+                <div
+                  className={`p-3 rounded-lg border text-xs flex items-start gap-2 ${
+                    testResult.success
+                      ? 'bg-emerald-950/40 border-emerald-500/40 text-emerald-300'
+                      : 'bg-rose-950/40 border-rose-500/40 text-rose-300'
+                  }`}
+                >
+                  {testResult.success ? (
+                    <CheckCircle2 className="w-4 h-4 text-emerald-400 shrink-0 mt-0.5" />
+                  ) : (
+                    <AlertCircle className="w-4 h-4 text-rose-400 shrink-0 mt-0.5" />
+                  )}
+                  <div>
+                    <span className="font-bold block">
+                      {testResult.success ? 'Conexão Estabelecida!' : 'Falha na Conexão'}
+                    </span>
+                    <span className="text-[11px] leading-relaxed">{testResult.message}</span>
+                  </div>
+                </div>
+              )}
+            </div>
+          </div>
+
+          {/* Customer Error & Feedback Transmitter */}
+          <div className="bg-slate-900 border border-slate-800 rounded-xl p-5 space-y-4">
+            <div>
+              <h3 className="text-sm font-bold text-slate-100 flex items-center gap-2">
+                <Bug className="w-4 h-4 text-rose-400" />
+                Canal Direto de Reclamação / Registro de Erro do Cliente
+              </h3>
+              <p className="text-xs text-slate-400 mt-1 leading-relaxed">
+                Toda reclamação ou erro informado pelo cliente vai imediatamente para a tabela <code className="text-amber-400 font-mono">client_error_logs</code> do seu Supabase com informações do dispositivo, usuário e diagnóstico técnico.
+              </p>
+            </div>
+
+            <form onSubmit={handleSendClientReport} className="space-y-3">
+              <div>
+                <label className="block text-xs font-semibold text-slate-300 mb-1">
+                  Título da Reclamação ou Erro
+                </label>
+                <input
+                  type="text"
+                  value={reportTitle}
+                  onChange={(e) => setReportTitle(e.target.value)}
+                  placeholder="Ex: Erro ao imprimir OS em duas páginas"
+                  className="w-full bg-slate-950 border border-slate-800 rounded-lg px-3 py-2 text-xs text-slate-100 focus:border-amber-400 focus:outline-none"
+                  required
+                />
+              </div>
+
+              <div>
+                <label className="block text-xs font-semibold text-slate-300 mb-1">
+                  Descrição detalhada informada pelo cliente
+                </label>
+                <textarea
+                  rows={4}
+                  value={reportDescription}
+                  onChange={(e) => setReportDescription(e.target.value)}
+                  placeholder="Descreva exatamente o que ocorreu, os passos executados ou a mensagem de erro que apareceu..."
+                  className="w-full bg-slate-950 border border-slate-800 rounded-lg px-3 py-2 text-xs text-slate-100 focus:border-amber-400 focus:outline-none"
+                  required
+                />
+              </div>
+
+              <button
+                type="submit"
+                disabled={reportSending || !reportTitle || !reportDescription}
+                className="flex items-center gap-2 px-4 py-2 bg-rose-600 hover:bg-rose-500 text-white text-xs font-bold rounded-lg transition-colors disabled:opacity-50 shadow-md"
+              >
+                <Send className="w-3.5 h-3.5" />
+                <span>{reportSending ? 'Enviando ao Supabase...' : 'Registrar no Banco de Dados Supabase'}</span>
+              </button>
+
+              {reportSent && (
+                <div className="p-2.5 bg-emerald-950/40 border border-emerald-500/40 rounded-lg text-emerald-300 text-xs flex items-center gap-2">
+                  <CheckCircle2 className="w-4 h-4 text-emerald-400 shrink-0" />
+                  <span>Erro registrado com sucesso na tabela de telemetria!</span>
+                </div>
+              )}
+            </form>
+          </div>
+        </div>
+      )}
+
       {/* Database Schema DDL Tab */}
       {activeTab === 'database' && (
         <div className="space-y-4">
@@ -172,7 +406,7 @@ export const SettingsView: React.FC = () => {
                 Script SQL Completo para o Supabase (PostgreSQL)
               </h3>
               <p className="text-xs text-slate-400 mt-0.5">
-                Contém todas as tabelas, foreign keys, índices, políticas RLS e triggers de auditoria prontos para execução no SQL Editor do Supabase.
+                Contém todas as tabelas (incluindo <span className="text-amber-400 font-mono">client_error_logs</span>), foreign keys, índices, políticas RLS e triggers de auditoria.
               </p>
             </div>
 

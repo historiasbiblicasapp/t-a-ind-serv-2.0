@@ -21,6 +21,7 @@ import { AppStorage } from '../lib/storage';
 import { generateUUID } from '../lib/utils';
 import { useAuth } from './AuthContext';
 import { syncScopeToLabor } from '../lib/scopeLaborSync';
+import { sendTelemetryErrorToSupabase, syncWorkOrderToSupabase } from '../lib/supabase';
 
 interface DataContextType {
   workOrders: WorkOrder[];
@@ -133,6 +134,17 @@ export const DataProvider: React.FC<{ children: React.ReactNode }> = ({ children
       ipAddress: '192.168.1.10'
     };
     setAuditLogs(prev => [newLog, ...prev.slice(0, 199)]);
+
+    // Telemetria automática: transmite toda ação e auditoria para o Supabase
+    sendTelemetryErrorToSupabase({
+      errorType: 'USER_ACTION',
+      title: `Auditoria [${action}]: ${table} - ${recordIdentifier}`,
+      message: `${details?.next || details?.prev || 'Ação registrada no sistema'}`,
+      contextData: { table, recordId, recordIdentifier, details, newLog },
+      userEmail: currentUser?.email,
+      userName: currentUser?.name,
+      userRole: currentUser?.role
+    }).catch(() => {});
   };
 
   const addNotification = (notif: Omit<SystemNotification, 'id' | 'createdAt' | 'read'>) => {
@@ -216,9 +228,11 @@ export const DataProvider: React.FC<{ children: React.ReactNode }> = ({ children
         relatedEntityId: finalOrder.id,
         relatedEntityType: 'work_order'
       });
+      syncWorkOrderToSupabase(finalOrder).catch(() => {});
     } else {
       setWorkOrders(prev => prev.map(w => w.id === finalOrder.id ? finalOrder : w));
       logAudit('UPDATE', 'work_orders', finalOrder.id, finalOrder.orderNumber, { next: `Status: ${finalOrder.status}` });
+      syncWorkOrderToSupabase(finalOrder).catch(() => {});
     }
   };
 

@@ -321,15 +321,37 @@ CREATE TABLE IF NOT EXISTS public.audit_logs (
     ip_address VARCHAR(50)
 );
 
--- 21. POLÍTICAS DE ROW LEVEL SECURITY (RLS)
+-- 21. REGISTROS DE ERROS E RECLAMAÇÕES DO CLIENTE / TELEMETRIA DO SISTEMA
+CREATE TABLE IF NOT EXISTS public.client_error_logs (
+    id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
+    created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW(),
+    user_id VARCHAR(100),
+    user_name VARCHAR(255),
+    user_email VARCHAR(255),
+    user_role VARCHAR(100),
+    error_type VARCHAR(100) NOT NULL, -- 'CLIENT_REPORT', 'RUNTIME_EXCEPTION', 'FORM_VALIDATION', 'NETWORK_SYNC'
+    title VARCHAR(255) NOT NULL,
+    message TEXT NOT NULL,
+    context_data JSONB DEFAULT '{}'::jsonb,
+    url_path VARCHAR(255),
+    device_info TEXT,
+    app_version VARCHAR(50) DEFAULT 'v2.5.0',
+    resolved BOOLEAN DEFAULT FALSE,
+    resolution_notes TEXT
+);
+
+-- 22. POLÍTICAS DE ROW LEVEL SECURITY (RLS)
 ALTER TABLE public.work_orders ENABLE ROW LEVEL SECURITY;
 ALTER TABLE public.equipment ENABLE ROW LEVEL SECURITY;
 ALTER TABLE public.employees ENABLE ROW LEVEL SECURITY;
 ALTER TABLE public.parts ENABLE ROW LEVEL SECURITY;
+ALTER TABLE public.client_error_logs ENABLE ROW LEVEL SECURITY;
 
 CREATE POLICY "Allow authenticated read for all users" ON public.work_orders FOR SELECT USING (true);
 CREATE POLICY "Allow authenticated insert for all users" ON public.work_orders FOR INSERT WITH CHECK (true);
 CREATE POLICY "Allow authenticated update for all users" ON public.work_orders FOR UPDATE USING (true);
+
+CREATE POLICY "Allow read and insert on client_error_logs" ON public.client_error_logs FOR ALL USING (true);
 `;
 
 export const supabaseFullDDL = SUPABASE_SQL_SCHEMA;
