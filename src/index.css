@@ -57,6 +57,8 @@
   .custom-scrollbar {
     position: static !important;
     inset: auto !important;
+    top: 0 !important;
+    left: 0 !important;
     display: block !important;
     padding: 0 !important;
     margin: 0 !important;
@@ -73,12 +75,16 @@
     border-radius: 0 !important;
     box-shadow: none !important;
     flex: none !important;
+    transform: none !important;
   }
 
   /* Clean print document styles */
   .printable-work-order-doc,
   #work-order-print-document {
     display: block !important;
+    position: static !important;
+    top: 0 !important;
+    left: 0 !important;
     width: 100% !important;
     max-width: 100% !important;
     margin: 0 !important;
@@ -90,6 +96,7 @@
     overflow: visible !important;
     height: auto !important;
     min-height: 0 !important;
+    transform: none !important;
   }
 
   /* Page break rules */

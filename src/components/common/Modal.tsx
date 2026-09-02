@@ -59,7 +59,7 @@ export const Modal: React.FC<ModalProps> = ({
             animate={{ opacity: 1 }}
             exit={{ opacity: 0 }}
             onClick={onClose}
-            className="fixed inset-0 bg-slate-950/80 backdrop-blur-sm"
+            className="fixed inset-0 bg-slate-950/80 backdrop-blur-sm no-print"
           />
 
           {/* Modal Content */}
@@ -68,10 +68,10 @@ export const Modal: React.FC<ModalProps> = ({
             animate={{ opacity: 1, scale: 1, y: 0 }}
             exit={{ opacity: 0, scale: 0.96, y: 10 }}
             transition={{ duration: 0.18 }}
-            className={`relative w-full ${maxWidthClass} bg-slate-900 border border-slate-800 rounded-xl shadow-2xl overflow-hidden my-8 z-10 flex flex-col max-h-[90vh]`}
+            className={`relative w-full ${maxWidthClass} bg-slate-900 border border-slate-800 rounded-xl shadow-2xl overflow-hidden my-8 z-10 flex flex-col max-h-[90vh] print:m-0 print:p-0 print:border-none print:shadow-none print:bg-white print:max-h-none print:h-auto print:static print:w-full print:max-w-full`}
           >
             {/* Header */}
-            <div className="flex items-center justify-between px-6 py-4 border-b border-slate-800 bg-slate-900/90 sticky top-0 z-20">
+            <div className="flex items-center justify-between px-6 py-4 border-b border-slate-800 bg-slate-900/90 sticky top-0 z-20 no-print">
               <div className="flex items-center gap-3">
                 {icon && (
                   <div className="p-2 rounded-lg bg-amber-500/10 text-amber-400 border border-amber-500/20">
@@ -98,7 +98,7 @@ export const Modal: React.FC<ModalProps> = ({
             </div>
 
             {/* Body */}
-            <div className="p-6 overflow-y-auto flex-1 custom-scrollbar">
+            <div className="p-6 overflow-y-auto flex-1 custom-scrollbar print:p-0 print:m-0 print:overflow-visible print:h-auto print:max-h-none print:static">
               {children}
             </div>
           </motion.div>
