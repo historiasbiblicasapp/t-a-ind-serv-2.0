@@ -279,11 +279,11 @@ export function exportWorkOrderToPDF(order: any): void {
     doc.setFontSize(6.5);
     doc.setFont('helvetica', 'bold');
     doc.text('ITEM', margin + 2, y + 4);
-    doc.text('DESCRIÇÃO DA ATIVIDADE', margin + 16, y + 4);
-    doc.text('PESSOAS', margin + 95, y + 4);
-    doc.text('INÍCIO', margin + 115, y + 4);
-    doc.text('TÉRMINO', margin + 145, y + 4);
-    doc.text('RESPONSÁVEL', margin + 172, y + 4);
+    doc.text('DESCRIÇÃO DA ATIVIDADE', margin + 14, y + 4);
+    doc.text('PESSOAS', margin + 90, y + 4, { align: 'center' });
+    doc.text('INÍCIO', margin + 100, y + 4);
+    doc.text('TÉRMINO', margin + 128, y + 4);
+    doc.text('RESPONSÁVEL', margin + 156, y + 4);
     y += 5.5;
   };
 
@@ -314,11 +314,11 @@ export function exportWorkOrderToPDF(order: any): void {
       doc.setFont('helvetica', 'bold');
       doc.text(String(sc.itemNumber || idx + 1), margin + 2, y + 4);
       doc.setFont('helvetica', 'normal');
-      doc.text(String(sc.description || '').substring(0, 46), margin + 16, y + 4);
-      doc.text(String(sc.peopleCount || 1), margin + 100, y + 4);
-      doc.text(String(sc.startDate || '-').substring(0, 16), margin + 115, y + 4);
-      doc.text(String(sc.endDate || '-').substring(0, 16), margin + 145, y + 4);
-      doc.text(String(sc.responsibleName || 'A definir').substring(0, 14), margin + 172, y + 4);
+      doc.text(String(sc.description || '').substring(0, 44), margin + 14, y + 4);
+      doc.text(String(sc.peopleCount || 1), margin + 90, y + 4, { align: 'center' });
+      doc.text(String(sc.startDate || '-').substring(0, 16), margin + 100, y + 4);
+      doc.text(String(sc.endDate || '-').substring(0, 16), margin + 128, y + 4);
+      doc.text(String(sc.responsibleName || 'A definir').substring(0, 22), margin + 156, y + 4);
       y += 5.5;
     });
   }
@@ -340,11 +340,11 @@ export function exportWorkOrderToPDF(order: any): void {
     doc.setFontSize(6.5);
     doc.setFont('helvetica', 'bold');
     doc.text('ITEM', margin + 2, y + 4);
-    doc.text('PROFISSIONAL / TÉCNICO', margin + 16, y + 4);
-    doc.text('CARGO / ESPECIALIDADE', margin + 70, y + 4);
-    doc.text('HORAS', margin + 125, y + 4);
-    doc.text('VALOR/H', margin + 145, y + 4);
-    doc.text('SUBTOTAL', margin + 170, y + 4);
+    doc.text('PROFISSIONAL / TÉCNICO', margin + 14, y + 4);
+    doc.text('CARGO / ESPECIALIDADE', margin + 64, y + 4);
+    doc.text('HORAS', margin + 132, y + 4, { align: 'center' });
+    doc.text('VALOR/H', margin + 162, y + 4, { align: 'right' });
+    doc.text('SUBTOTAL', margin + 184, y + 4, { align: 'right' });
     y += 5.5;
   };
 
@@ -375,12 +375,12 @@ export function exportWorkOrderToPDF(order: any): void {
       doc.setFont('helvetica', 'bold');
       doc.text(String(lb.itemNumber || idx + 1), margin + 2, y + 4);
       doc.setFont('helvetica', 'normal');
-      doc.text(String(lb.employeeName || 'A definir').substring(0, 30), margin + 16, y + 4);
-      doc.text(String(lb.positionName || 'Técnico').substring(0, 25), margin + 70, y + 4);
-      doc.text(`${lb.hours || 0}h`, margin + 127, y + 4);
-      doc.text(formatCurrency(lb.hourlyRate || 0), margin + 145, y + 4);
+      doc.text(String(lb.employeeName || 'A definir').substring(0, 30), margin + 14, y + 4);
+      doc.text(String(lb.positionName || lb.role || 'Técnico').substring(0, 36), margin + 64, y + 4);
+      doc.text(`${lb.hours || 0}h`, margin + 132, y + 4, { align: 'center' });
+      doc.text(formatCurrency(lb.hourlyRate || 0), margin + 162, y + 4, { align: 'right' });
       doc.setFont('helvetica', 'bold');
-      doc.text(formatCurrency(lb.totalValue || 0), margin + 170, y + 4);
+      doc.text(formatCurrency(lb.totalValue || 0), margin + 184, y + 4, { align: 'right' });
       y += 5.5;
     });
   }
@@ -403,11 +403,11 @@ export function exportWorkOrderToPDF(order: any): void {
     doc.setFontSize(6.5);
     doc.setFont('helvetica', 'bold');
     doc.text('ITEM', margin + 2, y + 4);
-    doc.text('RECURSO / FERRAMENTA', margin + 16, y + 4);
-    doc.text('TIPO', margin + 85, y + 4);
-    doc.text('QTD', margin + 125, y + 4);
-    doc.text('STATUS', margin + 145, y + 4);
-    doc.text('CUSTO TOTAL', margin + 170, y + 4);
+    doc.text('RECURSO / FERRAMENTA', margin + 14, y + 4);
+    doc.text('TIPO', margin + 70, y + 4);
+    doc.text('QTD', margin + 115, y + 4, { align: 'center' });
+    doc.text('STATUS', margin + 128, y + 4);
+    doc.text('CUSTO TOTAL', margin + 184, y + 4, { align: 'right' });
     y += 5.5;
 
     resourceList.forEach((rc: any, idx: number) => {
@@ -422,12 +422,12 @@ export function exportWorkOrderToPDF(order: any): void {
       doc.setFont('helvetica', 'bold');
       doc.text(String(idx + 1), margin + 2, y + 4);
       doc.setFont('helvetica', 'normal');
-      doc.text(String(rc.name || '').substring(0, 35), margin + 16, y + 4);
-      doc.text(String(rc.type || '-'), margin + 85, y + 4);
-      doc.text(`${rc.quantity || 1} ${rc.unit || 'un'}`, margin + 125, y + 4);
-      doc.text(String(rc.status || 'Alocado'), margin + 145, y + 4);
+      doc.text(String(rc.name || '').substring(0, 32), margin + 14, y + 4);
+      doc.text(String(rc.type || '-').substring(0, 20), margin + 70, y + 4);
+      doc.text(`${rc.quantity || 1} ${rc.unit || 'un'}`, margin + 115, y + 4, { align: 'center' });
+      doc.text(String(rc.status || 'Alocado').substring(0, 16), margin + 128, y + 4);
       doc.setFont('helvetica', 'bold');
-      doc.text(formatCurrency(rc.totalCost || 0), margin + 170, y + 4);
+      doc.text(formatCurrency(rc.totalCost || 0), margin + 184, y + 4, { align: 'right' });
       y += 5.5;
     });
 
@@ -443,7 +443,7 @@ export function exportWorkOrderToPDF(order: any): void {
   const subtotalCost = val.subtotalCost || ((val.laborCost || 0) + (val.partsCost || 0) + (val.materialsCost || 0) + (val.servicesCost || 0) + (val.resourcesCost || 0) + (val.additionalCosts || 0) + travelCost);
 
   // Financial Box
-  const finWidth = 85;
+  const finWidth = 88;
   doc.setFillColor(248, 250, 252);
   doc.rect(margin, y, finWidth, 40, 'F');
   doc.setDrawColor(203, 213, 225);

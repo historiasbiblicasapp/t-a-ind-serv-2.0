@@ -220,11 +220,11 @@ export const WorkOrderPrintView: React.FC<WorkOrderPrintViewProps> = ({
             <thead>
               <tr className="bg-slate-200 text-slate-800 uppercase font-bold">
                 <th className="border border-slate-300 p-1 w-10 text-center">Item</th>
-                <th className="border border-slate-300 p-1 text-left">Descrição da Atividade / Procedimento</th>
+                <th className="border border-slate-300 p-1 text-left">Descrição da Atividade</th>
                 <th className="border border-slate-300 p-1 w-12 text-center">Pessoas</th>
                 <th className="border border-slate-300 p-1 w-28 text-left">Início</th>
                 <th className="border border-slate-300 p-1 w-28 text-left">Término</th>
-                <th className="border border-slate-300 p-1 w-28 text-left">Responsável</th>
+                <th className="border border-slate-300 p-1 w-36 text-left">Responsável</th>
               </tr>
             </thead>
             <tbody>
@@ -243,8 +243,8 @@ export const WorkOrderPrintView: React.FC<WorkOrderPrintViewProps> = ({
                       {sc.observation && <span className="block text-[8px] text-slate-500 italic mt-0.5">Obs: {sc.observation}</span>}
                     </td>
                     <td className="border border-slate-300 p-1 text-center font-semibold">{sc.peopleCount || 1}</td>
-                    <td className="border border-slate-300 p-1 text-slate-700">{sc.startDate || '—'}</td>
-                    <td className="border border-slate-300 p-1 text-slate-700">{sc.endDate || '—'}</td>
+                    <td className="border border-slate-300 p-1 text-slate-700 whitespace-nowrap">{sc.startDate || '—'}</td>
+                    <td className="border border-slate-300 p-1 text-slate-700 whitespace-nowrap">{sc.endDate || '—'}</td>
                     <td className="border border-slate-300 p-1 font-medium text-slate-900">{sc.responsibleName || 'A definir'}</td>
                   </tr>
                 ))
@@ -265,7 +265,6 @@ export const WorkOrderPrintView: React.FC<WorkOrderPrintViewProps> = ({
             <thead>
               <tr className="bg-slate-200 text-slate-800 uppercase font-bold">
                 <th className="border border-slate-300 p-1 w-10 text-center">Item</th>
-                <th className="border border-slate-300 p-1 text-left">Atividade Vinculada</th>
                 <th className="border border-slate-300 p-1 text-left">Profissional / Especialista</th>
                 <th className="border border-slate-300 p-1 text-left">Função / Especialidade</th>
                 <th className="border border-slate-300 p-1 w-14 text-center">Horas</th>
@@ -276,21 +275,23 @@ export const WorkOrderPrintView: React.FC<WorkOrderPrintViewProps> = ({
             <tbody>
               {laborList.length === 0 ? (
                 <tr>
-                  <td colSpan={7} className="border border-slate-300 p-2 text-center text-slate-500 italic">
+                  <td colSpan={6} className="border border-slate-300 p-2 text-center text-slate-500 italic">
                     Nenhum profissional alocado nesta Ordem de Serviço.
                   </td>
                 </tr>
               ) : (
                 laborList.map((lb) => {
                   const matchedScope = scopeList.find(s => s.itemNumber === lb.itemNumber);
-                  const actLabel = lb.activityDescription || matchedScope?.description || (lb.itemNumber === 'GERAL' ? 'Apoio Geral' : `Atividade ${lb.itemNumber}`);
+                  const actLabel = lb.activityDescription || matchedScope?.description;
 
                   return (
                     <tr key={lb.id} className="hover:bg-slate-50 print-avoid-break">
                       <td className="border border-slate-300 p-1 text-center font-mono font-bold text-slate-900">{lb.itemNumber}</td>
-                      <td className="border border-slate-300 p-1 text-slate-700">{actLabel}</td>
-                      <td className="border border-slate-300 p-1 font-semibold text-slate-950">{lb.employeeName || 'A definir'}</td>
-                      <td className="border border-slate-300 p-1 text-slate-700">{lb.positionName}</td>
+                      <td className="border border-slate-300 p-1">
+                        <span className="font-semibold text-slate-950 block">{lb.employeeName || 'A definir'}</span>
+                        {actLabel && <span className="text-[8px] text-slate-500 block">Ref: {actLabel}</span>}
+                      </td>
+                      <td className="border border-slate-300 p-1 text-slate-800 font-medium">{lb.positionName}</td>
                       <td className="border border-slate-300 p-1 text-center font-mono">{lb.hours}h</td>
                       <td className="border border-slate-300 p-1 text-right font-mono">{formatCurrency(lb.hourlyRate)}</td>
                       <td className="border border-slate-300 p-1 text-right font-mono font-bold text-slate-900">{formatCurrency(lb.totalValue)}</td>
@@ -301,7 +302,7 @@ export const WorkOrderPrintView: React.FC<WorkOrderPrintViewProps> = ({
             </tbody>
             <tfoot>
               <tr className="bg-slate-100 font-bold print-avoid-break">
-                <td colSpan={6} className="border border-slate-300 p-1 text-right uppercase text-[9px]">
+                <td colSpan={5} className="border border-slate-300 p-1 text-right uppercase text-[9px]">
                   Subtotal Mão de Obra Direta:
                 </td>
                 <td className="border border-slate-300 p-1 text-right font-mono text-slate-950">

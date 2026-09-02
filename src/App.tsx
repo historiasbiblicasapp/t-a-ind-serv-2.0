@@ -85,22 +85,24 @@ const MainAppContent: React.FC = () => {
   };
 
   return (
-    <div className="flex h-screen w-full bg-slate-950 text-slate-100 overflow-hidden font-sans">
+    <div className="flex h-screen w-full bg-slate-950 text-slate-100 overflow-hidden font-sans app-root-container">
       {/* Sidebar Navigation */}
-      <Sidebar
-        currentPage={currentPage}
-        onNavigate={(page) => {
-          setCurrentPage(page);
-          setIsSidebarOpen(false);
-        }}
-        isCollapsed={isSidebarCollapsed}
-        onToggleCollapse={() => setIsSidebarCollapsed(!isSidebarCollapsed)}
-        isOpenMobile={isSidebarOpen}
-        onCloseMobile={() => setIsSidebarOpen(false)}
-      />
+      <div className="no-print">
+        <Sidebar
+          currentPage={currentPage}
+          onNavigate={(page) => {
+            setCurrentPage(page);
+            setIsSidebarOpen(false);
+          }}
+          isCollapsed={isSidebarCollapsed}
+          onToggleCollapse={() => setIsSidebarCollapsed(!isSidebarCollapsed)}
+          isOpenMobile={isSidebarOpen}
+          onCloseMobile={() => setIsSidebarOpen(false)}
+        />
+      </div>
 
       {/* Main Content Area */}
-      <div className="flex-1 flex flex-col min-w-0 h-screen overflow-hidden">
+      <div className="flex-1 flex flex-col min-w-0 h-screen overflow-hidden no-print">
         {/* Top Header */}
         <Header
           currentPage={currentPage}
