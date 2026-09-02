@@ -1,1 +1,119 @@
 @import "tailwindcss";
+
+/* ==========================================================================
+   Industrial High-Resolution Print Stylesheet (A4 / PDF)
+   ========================================================================== */
+@media print {
+  @page {
+    size: A4 portrait;
+    margin: 8mm 8mm 10mm 8mm;
+  }
+
+  /* Reset global document backgrounds & typography */
+  html, body, #root {
+    background-color: #ffffff !important;
+    background: #ffffff !important;
+    color: #0f172a !important;
+    font-size: 10pt !important;
+    line-height: 1.35 !important;
+    margin: 0 !important;
+    padding: 0 !important;
+    overflow: visible !important;
+    height: auto !important;
+    min-height: auto !important;
+    width: 100% !important;
+    -webkit-print-color-adjust: exact !important;
+    print-color-adjust: exact !important;
+  }
+
+  /* Hide app navigation chrome, sidebars, floating widgets, buttons and interactive controls */
+  header,
+  aside,
+  nav,
+  button,
+  .no-print,
+  #modal-close-btn,
+  .fixed.inset-0.bg-slate-950\/80 {
+    display: none !important;
+  }
+
+  /* Flatten modal wrapper so it doesn't crop or introduce scrollbars/dialog boxes */
+  .fixed.inset-0 {
+    position: static !important;
+    inset: auto !important;
+    display: block !important;
+    padding: 0 !important;
+    margin: 0 !important;
+    overflow: visible !important;
+    height: auto !important;
+    max-height: none !important;
+    width: 100% !important;
+    background: transparent !important;
+    box-shadow: none !important;
+  }
+
+  .relative.w-full.max-w-5xl,
+  .relative.w-full.max-w-6xl,
+  .relative.w-full.max-w-4xl {
+    max-width: 100% !important;
+    width: 100% !important;
+    margin: 0 !important;
+    padding: 0 !important;
+    border: none !important;
+    border-radius: 0 !important;
+    background: #ffffff !important;
+    box-shadow: none !important;
+    overflow: visible !important;
+    max-height: none !important;
+    height: auto !important;
+  }
+
+  /* Clean print document styles */
+  .printable-work-order-doc {
+    display: block !important;
+    width: 100% !important;
+    margin: 0 !important;
+    padding: 0 !important;
+    background: #ffffff !important;
+    color: #0f172a !important;
+    border: none !important;
+    box-shadow: none !important;
+    overflow: visible !important;
+  }
+
+  /* Page break rules */
+  .print-avoid-break {
+    break-inside: avoid !important;
+    page-break-inside: avoid !important;
+  }
+
+  .print-page-break-before {
+    break-before: page !important;
+    page-break-before: always !important;
+  }
+
+  /* Table rendering */
+  table {
+    width: 100% !important;
+    border-collapse: collapse !important;
+    break-inside: auto;
+  }
+
+  tr {
+    break-inside: avoid !important;
+    page-break-inside: avoid !important;
+  }
+
+  thead {
+    display: table-header-group !important;
+  }
+
+  tfoot {
+    display: table-footer-group !important;
+  }
+
+  th, td {
+    border-color: #94a3b8 !important;
+  }
+}
+

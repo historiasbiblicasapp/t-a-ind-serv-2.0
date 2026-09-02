@@ -56,6 +56,7 @@ const MainAppContent: React.FC = () => {
   };
 
   const handlePrintWorkOrder = (order: WorkOrder) => {
+    setSelectedOrderId(null);
     setPrintingOrder(order);
   };
 
