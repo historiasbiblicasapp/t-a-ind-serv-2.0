@@ -130,11 +130,42 @@ export function exportWorkOrderToPDF(order: any): void {
   });
 
   const pageWidth = 210;
+  const pageHeight = 297;
   const margin = 12;
   const contentWidth = pageWidth - (margin * 2);
-  let y = 14;
+  const maxY = 265;
+  let y = 12;
 
-  // Header Banner
+  const renderContinuationHeader = () => {
+    doc.setFillColor(15, 23, 42); // slate-900
+    doc.rect(margin, 10, contentWidth, 12, 'F');
+    doc.setFillColor(245, 158, 11); // amber-500
+    doc.rect(margin, 22, contentWidth, 1, 'F');
+
+    doc.setTextColor(255, 255, 255);
+    doc.setFontSize(9);
+    doc.setFont('helvetica', 'bold');
+    doc.text('T&A INDUSTRIAL SERVICE — ORDEM DE SERVIÇO (CONTINUAÇÃO)', margin + 3, 17);
+
+    doc.setTextColor(245, 158, 11);
+    doc.setFontSize(8.5);
+    doc.text(String(order.orderNumber || 'OS-0000'), pageWidth - margin - 3, 17, { align: 'right' });
+
+    y = 28;
+  };
+
+  const checkPageBreak = (neededHeight: number) => {
+    if (y + neededHeight > maxY) {
+      doc.addPage();
+      renderContinuationHeader();
+      return true;
+    }
+    return false;
+  };
+
+  // ==========================================
+  // PAGE 1: HEADER & BANNER
+  // ==========================================
   doc.setFillColor(15, 23, 42); // slate-900
   doc.rect(margin, y, contentWidth, 22, 'F');
   doc.setFillColor(245, 158, 11); // amber-500
@@ -208,14 +239,18 @@ export function exportWorkOrderToPDF(order: any): void {
 
   doc.text(`Código / Tag: ${order.equipmentCode || '-'}`, margin + 95, y + 9.5);
   doc.text(`Nome do Ativo: ${order.equipmentName || '-'}`, margin + 95, y + 14);
-  doc.text(`Responsável Técnico: ${order.responsibleName || 'Não atribuído'}`, margin + 95, y + 18.5);
+  doc.text(`Responsável Geral: ${order.responsibleName || 'Não atribuído'}`, margin + 95, y + 18.5);
 
   y += 26;
 
   // 3. Problem Description
+  const descLines = doc.splitTextToSize(order.description || 'Sem descrição detalhada.', contentWidth - 6);
+  const descHeight = Math.max(16, (descLines.length * 4) + 8);
+  checkPageBreak(descHeight + 4);
+
   doc.setFillColor(255, 255, 255);
   doc.setDrawColor(203, 213, 225);
-  doc.rect(margin, y, contentWidth, 16, 'S');
+  doc.rect(margin, y, contentWidth, descHeight, 'S');
 
   doc.setFontSize(7.5);
   doc.setFont('helvetica', 'bold');
@@ -225,29 +260,34 @@ export function exportWorkOrderToPDF(order: any): void {
   doc.setFont('helvetica', 'normal');
   doc.setFontSize(7);
   doc.setTextColor(51, 65, 85);
-  const descLines = doc.splitTextToSize(order.description || 'Sem descrição detalhada.', contentWidth - 6);
-  doc.text(descLines.slice(0, 3), margin + 3, y + 9);
+  doc.text(descLines, margin + 3, y + 9);
 
-  y += 20;
+  y += descHeight + 4;
 
   // 4. Scope of Activities Table
+  checkPageBreak(16);
   doc.setFontSize(8);
   doc.setFont('helvetica', 'bold');
   doc.setTextColor(15, 23, 42);
   doc.text('4. ESCOPO TÉCNICO DE ATIVIDADES', margin, y + 3.5);
   y += 5.5;
 
-  doc.setFillColor(30, 41, 59);
-  doc.rect(margin, y, contentWidth, 5.5, 'F');
-  doc.setTextColor(255, 255, 255);
-  doc.setFontSize(6.5);
-  doc.text('ITEM', margin + 2, y + 4);
-  doc.text('DESCRIÇÃO DA ATIVIDADE', margin + 16, y + 4);
-  doc.text('PESSOAS', margin + 95, y + 4);
-  doc.text('INÍCIO', margin + 115, y + 4);
-  doc.text('TÉRMINO', margin + 145, y + 4);
-  doc.text('RESPONSÁVEL', margin + 172, y + 4);
-  y += 5.5;
+  const renderScopeTableHeader = () => {
+    doc.setFillColor(30, 41, 59);
+    doc.rect(margin, y, contentWidth, 5.5, 'F');
+    doc.setTextColor(255, 255, 255);
+    doc.setFontSize(6.5);
+    doc.setFont('helvetica', 'bold');
+    doc.text('ITEM', margin + 2, y + 4);
+    doc.text('DESCRIÇÃO DA ATIVIDADE', margin + 16, y + 4);
+    doc.text('PESSOAS', margin + 95, y + 4);
+    doc.text('INÍCIO', margin + 115, y + 4);
+    doc.text('TÉRMINO', margin + 145, y + 4);
+    doc.text('RESPONSÁVEL', margin + 172, y + 4);
+    y += 5.5;
+  };
+
+  renderScopeTableHeader();
 
   const scopeList = order.scope || [];
   if (scopeList.length === 0) {
@@ -255,10 +295,15 @@ export function exportWorkOrderToPDF(order: any): void {
     doc.rect(margin, y, contentWidth, 5, 'F');
     doc.setTextColor(148, 163, 184);
     doc.setFontSize(6.5);
+    doc.setFont('helvetica', 'normal');
     doc.text('Nenhum item de escopo registrado.', margin + 4, y + 3.5);
     y += 5;
   } else {
     scopeList.forEach((sc: any, idx: number) => {
+      if (checkPageBreak(6)) {
+        renderScopeTableHeader();
+      }
+
       doc.setFillColor(idx % 2 === 0 ? 255 : 248, 250, 252);
       doc.rect(margin, y, contentWidth, 5.5, 'F');
       doc.setDrawColor(226, 232, 240);
@@ -269,35 +314,41 @@ export function exportWorkOrderToPDF(order: any): void {
       doc.setFont('helvetica', 'bold');
       doc.text(String(sc.itemNumber || idx + 1), margin + 2, y + 4);
       doc.setFont('helvetica', 'normal');
-      doc.text(String(sc.description || '').substring(0, 48), margin + 16, y + 4);
+      doc.text(String(sc.description || '').substring(0, 46), margin + 16, y + 4);
       doc.text(String(sc.peopleCount || 1), margin + 100, y + 4);
       doc.text(String(sc.startDate || '-').substring(0, 16), margin + 115, y + 4);
       doc.text(String(sc.endDate || '-').substring(0, 16), margin + 145, y + 4);
-      doc.text(String(sc.responsibleName || 'A definir').substring(0, 12), margin + 172, y + 4);
+      doc.text(String(sc.responsibleName || 'A definir').substring(0, 14), margin + 172, y + 4);
       y += 5.5;
     });
   }
 
-  y += 3;
+  y += 4;
 
   // 5. Labor / Technicians Table
+  checkPageBreak(16);
   doc.setFontSize(8);
   doc.setFont('helvetica', 'bold');
   doc.setTextColor(15, 23, 42);
   doc.text('5. ALOCAÇÃO DE MÃO DE OBRA E ESPECIALISTAS', margin, y + 3.5);
   y += 5.5;
 
-  doc.setFillColor(30, 41, 59);
-  doc.rect(margin, y, contentWidth, 5.5, 'F');
-  doc.setTextColor(255, 255, 255);
-  doc.setFontSize(6.5);
-  doc.text('ITEM', margin + 2, y + 4);
-  doc.text('PROFISSIONAL / TÉCNICO', margin + 16, y + 4);
-  doc.text('CARGO / ESPECIALIDADE', margin + 70, y + 4);
-  doc.text('HORAS', margin + 125, y + 4);
-  doc.text('VALOR/H', margin + 145, y + 4);
-  doc.text('SUBTOTAL', margin + 170, y + 4);
-  y += 5.5;
+  const renderLaborTableHeader = () => {
+    doc.setFillColor(30, 41, 59);
+    doc.rect(margin, y, contentWidth, 5.5, 'F');
+    doc.setTextColor(255, 255, 255);
+    doc.setFontSize(6.5);
+    doc.setFont('helvetica', 'bold');
+    doc.text('ITEM', margin + 2, y + 4);
+    doc.text('PROFISSIONAL / TÉCNICO', margin + 16, y + 4);
+    doc.text('CARGO / ESPECIALIDADE', margin + 70, y + 4);
+    doc.text('HORAS', margin + 125, y + 4);
+    doc.text('VALOR/H', margin + 145, y + 4);
+    doc.text('SUBTOTAL', margin + 170, y + 4);
+    y += 5.5;
+  };
+
+  renderLaborTableHeader();
 
   const laborList = order.labor || [];
   if (laborList.length === 0) {
@@ -305,10 +356,15 @@ export function exportWorkOrderToPDF(order: any): void {
     doc.rect(margin, y, contentWidth, 5, 'F');
     doc.setTextColor(148, 163, 184);
     doc.setFontSize(6.5);
+    doc.setFont('helvetica', 'normal');
     doc.text('Nenhum profissional alocado.', margin + 4, y + 3.5);
     y += 5;
   } else {
     laborList.forEach((lb: any, idx: number) => {
+      if (checkPageBreak(6)) {
+        renderLaborTableHeader();
+      }
+
       doc.setFillColor(idx % 2 === 0 ? 255 : 248, 250, 252);
       doc.rect(margin, y, contentWidth, 5.5, 'F');
       doc.setDrawColor(226, 232, 240);
@@ -331,7 +387,56 @@ export function exportWorkOrderToPDF(order: any): void {
 
   y += 4;
 
-  // 6. Financial Summary & Signatures (Side by Side)
+  // 6. Resources Table (if any)
+  const resourceList = order.resources || [];
+  if (resourceList.length > 0) {
+    checkPageBreak(16);
+    doc.setFontSize(8);
+    doc.setFont('helvetica', 'bold');
+    doc.setTextColor(15, 23, 42);
+    doc.text('6. RECURSOS, EQUIPAMENTOS E FERRAMENTAL', margin, y + 3.5);
+    y += 5.5;
+
+    doc.setFillColor(30, 41, 59);
+    doc.rect(margin, y, contentWidth, 5.5, 'F');
+    doc.setTextColor(255, 255, 255);
+    doc.setFontSize(6.5);
+    doc.setFont('helvetica', 'bold');
+    doc.text('ITEM', margin + 2, y + 4);
+    doc.text('RECURSO / FERRAMENTA', margin + 16, y + 4);
+    doc.text('TIPO', margin + 85, y + 4);
+    doc.text('QTD', margin + 125, y + 4);
+    doc.text('STATUS', margin + 145, y + 4);
+    doc.text('CUSTO TOTAL', margin + 170, y + 4);
+    y += 5.5;
+
+    resourceList.forEach((rc: any, idx: number) => {
+      checkPageBreak(6);
+      doc.setFillColor(idx % 2 === 0 ? 255 : 248, 250, 252);
+      doc.rect(margin, y, contentWidth, 5.5, 'F');
+      doc.setDrawColor(226, 232, 240);
+      doc.line(margin, y + 5.5, margin + contentWidth, y + 5.5);
+
+      doc.setTextColor(15, 23, 42);
+      doc.setFontSize(6.5);
+      doc.setFont('helvetica', 'bold');
+      doc.text(String(idx + 1), margin + 2, y + 4);
+      doc.setFont('helvetica', 'normal');
+      doc.text(String(rc.name || '').substring(0, 35), margin + 16, y + 4);
+      doc.text(String(rc.type || '-'), margin + 85, y + 4);
+      doc.text(`${rc.quantity || 1} ${rc.unit || 'un'}`, margin + 125, y + 4);
+      doc.text(String(rc.status || 'Alocado'), margin + 145, y + 4);
+      doc.setFont('helvetica', 'bold');
+      doc.text(formatCurrency(rc.totalCost || 0), margin + 170, y + 4);
+      y += 5.5;
+    });
+
+    y += 4;
+  }
+
+  // 7. Financial Summary & Signatures (Guaranteed together on page)
+  checkPageBreak(48); // Ensure both boxes fit without cutting off
+
   const val = order.values || {};
   const travelCost = val.travelCost || 0;
   const taxAmount = val.taxAmount || 0;
@@ -340,9 +445,9 @@ export function exportWorkOrderToPDF(order: any): void {
   // Financial Box
   const finWidth = 85;
   doc.setFillColor(248, 250, 252);
-  doc.rect(margin, y, finWidth, 38, 'F');
+  doc.rect(margin, y, finWidth, 40, 'F');
   doc.setDrawColor(203, 213, 225);
-  doc.rect(margin, y, finWidth, 38, 'S');
+  doc.rect(margin, y, finWidth, 40, 'S');
 
   doc.setFontSize(7.5);
   doc.setFont('helvetica', 'bold');
@@ -367,35 +472,64 @@ export function exportWorkOrderToPDF(order: any): void {
   doc.text('Subtotal Operacional:', margin + 3, y + 27.5);
   doc.text(formatCurrency(subtotalCost), margin + finWidth - 3, y + 27.5, { align: 'right' });
 
-  doc.text(`Tributos (${val.taxPercent ? val.taxPercent + '%' : 'Inclusos'}):`, margin + 3, y + 31.5);
-  doc.text(formatCurrency(taxAmount), margin + finWidth - 3, y + 31.5, { align: 'right' });
+  doc.text(`Tributos (${val.taxPercent ? val.taxPercent + '%' : 'Inclusos'}):`, margin + 3, y + 32);
+  doc.text(formatCurrency(taxAmount), margin + finWidth - 3, y + 32, { align: 'right' });
 
   doc.setFontSize(8);
   doc.setFont('helvetica', 'bold');
   doc.setTextColor(15, 23, 42);
-  doc.text('TOTAL GERAL:', margin + 3, y + 36);
-  doc.text(formatCurrency(val.totalCost || 0), margin + finWidth - 3, y + 36, { align: 'right' });
+  doc.text('TOTAL GERAL:', margin + 3, y + 37.5);
+  doc.text(formatCurrency(val.totalCost || 0), margin + finWidth - 3, y + 37.5, { align: 'right' });
 
   // Signature Boxes
   const sigX = margin + finWidth + 6;
   const sigWidth = contentWidth - finWidth - 6;
 
+  doc.setFillColor(255, 255, 255);
+  doc.rect(sigX, y, sigWidth, 40, 'F');
+  doc.setDrawColor(203, 213, 225);
+  doc.rect(sigX, y, sigWidth, 40, 'S');
+
+  doc.setFontSize(6.5);
+  doc.setTextColor(100, 116, 139);
+  doc.text('Declaro a conformidade técnica dos serviços executados.', sigX + 3, y + 4.5);
+
   doc.setDrawColor(15, 23, 42);
-  doc.line(sigX + 4, y + 16, sigX + sigWidth - 4, y + 16);
+  doc.line(sigX + 4, y + 17, sigX + sigWidth - 4, y + 17);
   doc.setFontSize(7);
   doc.setFont('helvetica', 'bold');
   doc.setTextColor(15, 23, 42);
-  doc.text('Responsável Técnico / Executante', sigX + (sigWidth / 2), y + 20, { align: 'center' });
+  doc.text('Responsável Técnico / Executante', sigX + (sigWidth / 2), y + 21, { align: 'center' });
   doc.setFont('helvetica', 'normal');
   doc.setFontSize(6.5);
   doc.setTextColor(100, 116, 139);
-  doc.text(String(order.responsibleName || 'T&A Industrial Service'), sigX + (sigWidth / 2), y + 24, { align: 'center' });
+  doc.text(String(order.responsibleName || 'T&A Industrial Service'), sigX + (sigWidth / 2), y + 25, { align: 'center' });
 
   doc.line(sigX + 4, y + 33, sigX + sigWidth - 4, y + 33);
   doc.setFontSize(7);
   doc.setFont('helvetica', 'bold');
   doc.setTextColor(15, 23, 42);
-  doc.text('Aprovação & Aceite do Cliente', sigX + (sigWidth / 2), y + 36, { align: 'center' });
+  doc.text('Aprovação & Aceite do Cliente', sigX + (sigWidth / 2), y + 36.5, { align: 'center' });
+
+  // Add Page Numbers & Footer to all pages
+  const totalPages = doc.getNumberOfPages();
+  for (let i = 1; i <= totalPages; i++) {
+    doc.setPage(i);
+    doc.setFontSize(6.5);
+    doc.setFont('helvetica', 'normal');
+    doc.setTextColor(148, 163, 184);
+    doc.text(
+      `T&A Industrial Service — OS: ${order.orderNumber || ''} — Gerado em: ${new Date().toLocaleDateString('pt-BR')} ${new Date().toLocaleTimeString('pt-BR')}`,
+      margin,
+      pageHeight - 6
+    );
+    doc.text(
+      `Página ${i} de ${totalPages}`,
+      pageWidth - margin,
+      pageHeight - 6,
+      { align: 'right' }
+    );
+  }
 
   // Save PDF
   doc.save(`${order.orderNumber || 'Ordem_de_Servico'}_TA_Industrial.pdf`);

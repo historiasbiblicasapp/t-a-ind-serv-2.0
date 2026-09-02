@@ -211,7 +211,7 @@ export const WorkOrderPrintView: React.FC<WorkOrderPrintViewProps> = ({
         {/* ================================================================
             4. ESCOPO TÉCNICO DE ATIVIDADES DETALHADAS
            ================================================================ */}
-        <div className="mb-3 print-avoid-break">
+        <div className="mb-3">
           <h3 className="font-bold text-slate-800 uppercase mb-1 text-[10px] flex items-center gap-1">
             <CheckSquare className="w-3 h-3 text-amber-600" />
             4. Escopo Técnico de Atividades Detalhadas
@@ -236,7 +236,7 @@ export const WorkOrderPrintView: React.FC<WorkOrderPrintViewProps> = ({
                 </tr>
               ) : (
                 scopeList.map((sc) => (
-                  <tr key={sc.id} className="hover:bg-slate-50">
+                  <tr key={sc.id} className="hover:bg-slate-50 print-avoid-break">
                     <td className="border border-slate-300 p-1 text-center font-mono font-bold text-slate-900">{sc.itemNumber}</td>
                     <td className="border border-slate-300 p-1 font-medium">
                       {sc.description}
@@ -256,7 +256,7 @@ export const WorkOrderPrintView: React.FC<WorkOrderPrintViewProps> = ({
         {/* ================================================================
             5. ALOCAÇÃO DE MÃO DE OBRA E ESPECIALISTAS
            ================================================================ */}
-        <div className="mb-3 print-avoid-break">
+        <div className="mb-3">
           <h3 className="font-bold text-slate-800 uppercase mb-1 text-[10px] flex items-center gap-1">
             <Wrench className="w-3 h-3 text-amber-600" />
             5. Alocação de Mão de Obra e Especialistas Técnicos
@@ -286,7 +286,7 @@ export const WorkOrderPrintView: React.FC<WorkOrderPrintViewProps> = ({
                   const actLabel = lb.activityDescription || matchedScope?.description || (lb.itemNumber === 'GERAL' ? 'Apoio Geral' : `Atividade ${lb.itemNumber}`);
 
                   return (
-                    <tr key={lb.id} className="hover:bg-slate-50">
+                    <tr key={lb.id} className="hover:bg-slate-50 print-avoid-break">
                       <td className="border border-slate-300 p-1 text-center font-mono font-bold text-slate-900">{lb.itemNumber}</td>
                       <td className="border border-slate-300 p-1 text-slate-700">{actLabel}</td>
                       <td className="border border-slate-300 p-1 font-semibold text-slate-950">{lb.employeeName || 'A definir'}</td>
@@ -300,7 +300,7 @@ export const WorkOrderPrintView: React.FC<WorkOrderPrintViewProps> = ({
               )}
             </tbody>
             <tfoot>
-              <tr className="bg-slate-100 font-bold">
+              <tr className="bg-slate-100 font-bold print-avoid-break">
                 <td colSpan={6} className="border border-slate-300 p-1 text-right uppercase text-[9px]">
                   Subtotal Mão de Obra Direta:
                 </td>
@@ -316,7 +316,7 @@ export const WorkOrderPrintView: React.FC<WorkOrderPrintViewProps> = ({
             6. RECURSOS, FERRAMENTAS & EQUIPAMENTOS ESPECIAIS (SE HOUVER)
            ================================================================ */}
         {resourceList.length > 0 && (
-          <div className="mb-3 print-avoid-break">
+          <div className="mb-3">
             <h3 className="font-bold text-slate-800 uppercase mb-1 text-[10px] flex items-center gap-1">
               <Package className="w-3 h-3 text-amber-600" />
               6. Recursos, Equipamentos Especiais e Ferramental
@@ -334,7 +334,7 @@ export const WorkOrderPrintView: React.FC<WorkOrderPrintViewProps> = ({
               </thead>
               <tbody>
                 {resourceList.map((rc, idx) => (
-                  <tr key={rc.id}>
+                  <tr key={rc.id} className="print-avoid-break">
                     <td className="border border-slate-300 p-1 text-center font-mono font-bold">{idx + 1}</td>
                     <td className="border border-slate-300 p-1 font-medium">{rc.name}</td>
                     <td className="border border-slate-300 p-1 text-center">{rc.type}</td>
@@ -352,7 +352,7 @@ export const WorkOrderPrintView: React.FC<WorkOrderPrintViewProps> = ({
             7. MARCOS E CRONOGRAMA DE ENTREGA (SE HOUVER)
            ================================================================ */}
         {milestoneList.length > 0 && (
-          <div className="mb-3 print-avoid-break">
+          <div className="mb-3">
             <h3 className="font-bold text-slate-800 uppercase mb-1 text-[10px] flex items-center gap-1">
               <Clock className="w-3 h-3 text-amber-600" />
               7. Cronograma e Marcos de Entrega
@@ -369,7 +369,7 @@ export const WorkOrderPrintView: React.FC<WorkOrderPrintViewProps> = ({
               </thead>
               <tbody>
                 {milestoneList.map((ms) => (
-                  <tr key={ms.id}>
+                  <tr key={ms.id} className="print-avoid-break">
                     <td className="border border-slate-300 p-1 font-medium">{ms.title}</td>
                     <td className="border border-slate-300 p-1 text-center">{formatDate(ms.targetDate)}</td>
                     <td className="border border-slate-300 p-1 text-center">{ms.completedDate ? formatDate(ms.completedDate) : '—'}</td>
@@ -386,7 +386,7 @@ export const WorkOrderPrintView: React.FC<WorkOrderPrintViewProps> = ({
             8. APONTAMENTOS DE EXECUÇÃO EM CAMPO (SE HOUVER OU BLOC DE CAMPO)
            ================================================================ */}
         {executionList.length > 0 ? (
-          <div className="mb-3 print-avoid-break">
+          <div className="mb-3">
             <h3 className="font-bold text-slate-800 uppercase mb-1 text-[10px] flex items-center gap-1">
               <ShieldCheck className="w-3 h-3 text-amber-600" />
               8. Registros e Apontamentos de Execução Realizada
@@ -402,7 +402,7 @@ export const WorkOrderPrintView: React.FC<WorkOrderPrintViewProps> = ({
               </thead>
               <tbody>
                 {executionList.map((ex) => (
-                  <tr key={ex.id}>
+                  <tr key={ex.id} className="print-avoid-break">
                     <td className="border border-slate-300 p-1 text-center font-mono">{formatDate(ex.date)}</td>
                     <td className="border border-slate-300 p-1 text-center font-mono">{ex.startTime} às {ex.endTime}</td>
                     <td className="border border-slate-300 p-1 font-semibold">{ex.employeeName}</td>
