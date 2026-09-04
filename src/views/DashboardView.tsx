@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useState } from 'react';
 import { useData } from '../contexts/DataContext';
 import { useAuth } from '../contexts/AuthContext';
 import { StatCard } from '../components/common/StatCard';
@@ -19,10 +19,15 @@ import {
   QrCode,
   FileSpreadsheet,
   ChevronRight,
-  ArrowUpRight
+  ArrowUpRight,
+  UploadCloud,
+  Cloud,
+  HardDrive,
+  Settings
 } from 'lucide-react';
 import { PageId } from '../types';
 import { BrandIcon } from '../components/common/BrandLogo';
+import { getSupabaseConfig, syncAllEntitiesToSupabase } from '../lib/supabase';
 
 interface DashboardViewProps {
   onNavigate?: (page: PageId) => void;
@@ -42,8 +47,57 @@ export const DashboardView: React.FC<DashboardViewProps> = ({
   onSelectEquipment = (_eq: Equipment) => {},
 }) => {
   const handleOpenNew = onOpenNewWorkOrder || onOpenNewOS || (() => {});
-  const { kpis, workOrders, equipment, parts, preventivePlans } = useData();
+  const { kpis, workOrders, equipment, parts, preventivePlans, employees, suppliers } = useData();
   const { can } = useAuth();
+
+  const [syncingAll, setSyncingAll] = useState(false);
+  const [syncFeedback, setSyncFeedback] = useState<{ success: boolean; message: string } | null>(null);
+
+  const { isConfigured } = getSupabaseConfig();
+
+  const handleSyncAll = async () => {
+    if (!isConfigured) {
+      setSyncFeedback({
+        success: false,
+        message: 'Configure as credenciais do Supabase na aba Configurações antes de sincronizar.'
+      });
+      setTimeout(() => setSyncFeedback(null), 5000);
+      return;
+    }
+
+    setSyncingAll(true);
+    setSyncFeedback(null);
+    try {
+      const result = await syncAllEntitiesToSupabase({
+        workOrders,
+        equipment,
+        employees,
+        parts,
+        preventivePlans,
+        suppliers
+      });
+
+      if (result.success) {
+        setSyncFeedback({
+          success: true,
+          message: `Sincronização em massa concluída! ${result.count} registros enviados para o Supabase.`
+        });
+      } else {
+        setSyncFeedback({
+          success: false,
+          message: `Erro na sincronização: ${result.error || 'Falha de comunicação'}`
+        });
+      }
+    } catch (err: any) {
+      setSyncFeedback({
+        success: false,
+        message: `Falha: ${err.message || 'Erro inesperado'}`
+      });
+    } finally {
+      setSyncingAll(false);
+      setTimeout(() => setSyncFeedback(null), 6000);
+    }
+  };
 
   const recentOrders = workOrders.slice(0, 6);
   const criticalEquipment = equipment.filter(e => e.criticality === 'A' || e.status === 'Em Manutenção' || e.status === 'Parado').slice(0, 4);
@@ -71,6 +125,22 @@ export const DashboardView: React.FC<DashboardViewProps> = ({
         </div>
 
         <div className="flex flex-wrap items-center gap-2.5">
+          {/* Botão de Enviar em Massa para o Supabase */}
+          <button
+            id="dash-sync-all-btn"
+            onClick={handleSyncAll}
+            disabled={syncingAll}
+            title={isConfigured ? 'Sincronizar todos os dados do dispositivo com o banco Supabase' : 'Configurar Supabase nas Configurações'}
+            className={`flex items-center gap-2 px-3.5 py-2.5 font-bold text-xs rounded-xl transition-all shadow-md active:scale-95 disabled:opacity-50 ${
+              isConfigured
+                ? 'bg-emerald-600 hover:bg-emerald-500 text-slate-950 shadow-emerald-500/20'
+                : 'bg-slate-800 hover:bg-slate-700 text-amber-400 border border-amber-500/30'
+            }`}
+          >
+            <UploadCloud className={`w-4 h-4 ${syncingAll ? 'animate-bounce' : ''}`} />
+            <span>{syncingAll ? 'Enviando...' : 'Enviar em Massa (Supabase)'}</span>
+          </button>
+
           {can('criar') && (
             <button
               id="dash-quick-new-os"
@@ -99,6 +169,36 @@ export const DashboardView: React.FC<DashboardViewProps> = ({
           </button>
         </div>
       </div>
+
+      {/* Sync Feedback Toast / Banner */}
+      {syncFeedback && (
+        <div
+          className={`p-3.5 rounded-xl border text-xs flex items-center justify-between shadow-lg transition-all animate-fade-in ${
+            syncFeedback.success
+              ? 'bg-emerald-950/80 border-emerald-500/40 text-emerald-200'
+              : 'bg-amber-950/80 border-amber-500/40 text-amber-200'
+          }`}
+        >
+          <div className="flex items-center gap-2.5">
+            {syncFeedback.success ? (
+              <CheckCircle2 className="w-4 h-4 text-emerald-400 shrink-0" />
+            ) : (
+              <UploadCloud className="w-4 h-4 text-amber-400 shrink-0" />
+            )}
+            <span className="font-medium">{syncFeedback.message}</span>
+          </div>
+
+          {!isConfigured && (
+            <button
+              onClick={() => onNavigate('settings')}
+              className="flex items-center gap-1 px-2.5 py-1 text-[11px] font-bold bg-amber-500 hover:bg-amber-400 text-slate-950 rounded-lg transition-colors shrink-0 ml-3"
+            >
+              <Settings className="w-3 h-3" />
+              <span>Configurar Nuvem</span>
+            </button>
+          )}
+        </div>
+      )}
 
       {/* Primary KPI Grid */}
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">

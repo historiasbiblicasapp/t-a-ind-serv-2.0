@@ -99,15 +99,17 @@ export class AppStorage {
 
   static getUsers(): User[] {
     const users = getStorageItem<User[]>('users', INITIAL_USERS);
-    // Ensure master account exists
-    const hasMaster = users.some(u => u.email === 'microwasmel@gmail.com');
-    if (!hasMaster) {
-      const master = INITIAL_USERS.find(u => u.email === 'microwasmel@gmail.com');
-      if (master) {
-        const merged = [master, ...users];
-        setStorageItem('users', merged);
-        return merged;
+    // Ensure master account and default admin accounts exist
+    let updated = [...users];
+    INITIAL_USERS.forEach(initUser => {
+      if (!updated.some(u => u.email.toLowerCase() === initUser.email.toLowerCase())) {
+        updated.push(initUser);
       }
+    });
+
+    if (updated.length !== users.length) {
+      setStorageItem('users', updated);
+      return updated;
     }
     return users;
   }

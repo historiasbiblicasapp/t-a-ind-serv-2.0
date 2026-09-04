@@ -6,10 +6,17 @@
 @media print {
   @page {
     size: A4 portrait;
-    margin: 8mm 8mm 10mm 8mm;
+    margin: 0mm; /* Suppresses browser URL headers and footer timestamps */
   }
 
-  /* Reset global document backgrounds & typography */
+  /* 1. Global Reset */
+  *, *::before, *::after {
+    -webkit-print-color-adjust: exact !important;
+    print-color-adjust: exact !important;
+    box-sizing: border-box !important;
+    text-shadow: none !important;
+  }
+
   html, body, #root {
     background-color: #ffffff !important;
     background: #ffffff !important;
@@ -23,37 +30,46 @@
     min-height: 0 !important;
     max-height: none !important;
     width: 100% !important;
-    -webkit-print-color-adjust: exact !important;
-    print-color-adjust: exact !important;
+    position: static !important;
+    display: block !important;
+    transform: none !important;
   }
 
-  /* Hide app navigation chrome, sidebars, floating widgets, buttons and interactive controls */
+  /* 2. Strict Hiding of Background & UI Elements */
   .no-print,
+  .no-print *,
   aside,
   header,
   nav,
   main,
   button,
   #modal-close-btn,
-  .fixed.inset-0.bg-slate-950\/80,
   .backdrop-blur-sm,
-  .custom-scrollbar::-webkit-scrollbar {
+  .bg-slate-950\/80,
+  [role="dialog"] > div > div:first-child:has(button) {
     display: none !important;
     visibility: hidden !important;
     height: 0 !important;
     width: 0 !important;
+    min-height: 0 !important;
+    max-height: 0 !important;
+    margin: 0 !important;
+    padding: 0 !important;
     overflow: hidden !important;
+    opacity: 0 !important;
+    border: none !important;
+    pointer-events: none !important;
   }
 
-  /* Unbind and flatten ALL modal wrappers and scrolling viewports */
+  /* 3. Unbind and flatten layout containers to prevent pushing down content */
   .app-root-container,
+  .app-root-container > div:not(.no-print),
   .fixed,
   .relative,
   .overflow-y-auto,
   .overflow-x-hidden,
   .overflow-hidden,
   .flex-1,
-  [class*="max-h-"],
   .custom-scrollbar {
     position: static !important;
     inset: auto !important;
@@ -78,7 +94,22 @@
     transform: none !important;
   }
 
-  /* Clean print document styles */
+  /* 4. High-Priority rule to ensure .no-print elements NEVER take up height */
+  html body .no-print,
+  html body div.no-print,
+  html body [class*="no-print"],
+  html body [class*="print:hidden"] {
+    display: none !important;
+    visibility: hidden !important;
+    height: 0 !important;
+    min-height: 0 !important;
+    max-height: 0 !important;
+    margin: 0 !important;
+    padding: 0 !important;
+    overflow: hidden !important;
+  }
+
+  /* 5. Clean print document sheet starts directly at 0,0 on Page 1 with built-in printable margins */
   .printable-work-order-doc,
   #work-order-print-document {
     display: block !important;
@@ -88,7 +119,7 @@
     width: 100% !important;
     max-width: 100% !important;
     margin: 0 !important;
-    padding: 0 !important;
+    padding: 10mm 12mm 12mm 12mm !important;
     background: #ffffff !important;
     color: #0f172a !important;
     border: none !important;
@@ -99,7 +130,7 @@
     transform: none !important;
   }
 
-  /* Page break rules */
+  /* 6. Page break rules */
   .print-avoid-break,
   .print-section {
     break-inside: avoid !important;
@@ -111,7 +142,7 @@
     page-break-before: always !important;
   }
 
-  /* Table rendering & page splits */
+  /* 7. Table rendering & page splits */
   table {
     width: 100% !important;
     border-collapse: collapse !important;
@@ -136,4 +167,5 @@
     border-color: #94a3b8 !important;
   }
 }
+
 

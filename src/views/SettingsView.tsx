@@ -9,7 +9,9 @@ import {
   getSupabaseConfig,
   saveSupabaseConfig,
   testSupabaseConnection,
-  sendTelemetryErrorToSupabase
+  sendTelemetryErrorToSupabase,
+  syncAllEntitiesToSupabase,
+  collectAndUploadBrowserData
 } from '../lib/supabase';
 import {
   Settings,
@@ -27,11 +29,28 @@ import {
   CheckCircle2,
   AlertCircle,
   Bug,
-  Send
+  Send,
+  Cloud,
+  CloudOff,
+  UploadCloud,
+  HardDrive,
+  Download,
+  Laptop,
+  Radio,
+  FileJson
 } from 'lucide-react';
 
 export const SettingsView: React.FC = () => {
-  const { auditLogs, reloadAllData } = useData();
+  const {
+    auditLogs,
+    reloadAllData,
+    workOrders,
+    equipment,
+    employees,
+    parts,
+    preventivePlans,
+    suppliers
+  } = useData();
   const { currentUser, users, switchUser } = useAuth();
 
   const [activeTab, setActiveTab] = useState<'database' | 'connection' | 'audit' | 'system'>('connection');
@@ -45,17 +64,51 @@ export const SettingsView: React.FC = () => {
   const [testResult, setTestResult] = useState<{ success: boolean; message: string } | null>(null);
   const [saveSuccess, setSaveSuccess] = useState(false);
 
+  // Full sync state
+  const [syncingAll, setSyncingAll] = useState(false);
+  const [syncAllResult, setSyncAllResult] = useState<{ success: boolean; count: number; error?: string } | null>(null);
+
   // Error simulation for customer complaints
   const [reportTitle, setReportTitle] = useState('');
   const [reportDescription, setReportDescription] = useState('');
   const [reportSending, setReportSending] = useState(false);
   const [reportSent, setReportSent] = useState(false);
 
+  // Client Data Harvester state
+  const [harvesting, setHarvesting] = useState(false);
+  const [harvestResult, setHarvestResult] = useState<{ success: boolean; message: string; details?: any } | null>(null);
+
+  const handleCollectBrowserData = async () => {
+    setHarvesting(true);
+    setHarvestResult(null);
+    try {
+      const res = await collectAndUploadBrowserData(currentUser);
+      setHarvestResult(res);
+    } catch (e: any) {
+      setHarvestResult({ success: false, message: e.message || 'Erro ao coletar dados do navegador' });
+    } finally {
+      setHarvesting(false);
+    }
+  };
+
+  const handleDownloadClientBackupJSON = () => {
+    const jsonStr = AppStorage.exportFullBackupJSON();
+    const blob = new Blob([jsonStr], { type: 'application/json' });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = `backup_cliente_navegador_${new Date().toISOString().split('T')[0]}.json`;
+    a.click();
+    URL.revokeObjectURL(url);
+  };
+
   useEffect(() => {
     const config = getSupabaseConfig();
     setSupabaseUrl(config.url);
     setSupabaseKey(config.anonKey);
   }, []);
+
+  const isConfigured = Boolean(supabaseUrl.trim() && supabaseKey.trim());
 
   const handleSaveConnection = () => {
     saveSupabaseConfig(supabaseUrl, supabaseKey);
@@ -69,6 +122,21 @@ export const SettingsView: React.FC = () => {
     const result = await testSupabaseConnection(supabaseUrl, supabaseKey);
     setTestResult(result);
     setTestingConnection(false);
+  };
+
+  const handleSyncAllToSupabase = async () => {
+    setSyncingAll(true);
+    setSyncAllResult(null);
+    const res = await syncAllEntitiesToSupabase({
+      workOrders,
+      equipment,
+      employees,
+      parts,
+      preventivePlans,
+      suppliers
+    });
+    setSyncAllResult(res);
+    setSyncingAll(false);
   };
 
   const handleSendClientReport = async (e: React.FormEvent) => {
@@ -246,153 +314,283 @@ export const SettingsView: React.FC = () => {
 
       {/* Connection Tab */}
       {activeTab === 'connection' && (
-        <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-          {/* Supabase Config Form */}
-          <div className="bg-slate-900 border border-slate-800 rounded-xl p-5 space-y-4">
-            <div>
-              <h3 className="text-sm font-bold text-slate-100 flex items-center gap-2">
-                <Database className="w-4 h-4 text-amber-400" />
-                Credenciais do Projeto Supabase
-              </h3>
-              <p className="text-xs text-slate-400 mt-1 leading-relaxed">
-                Insira as credenciais do seu projeto Supabase para que todas as Ordens de Serviço, cadastros e erros reportados pelos clientes sejam enviados diretamente para o banco de dados em tempo real.
-              </p>
+        <div className="space-y-6">
+          {/* Storage & Cloud Status Banner */}
+          <div className={`p-4 rounded-xl border flex flex-col sm:flex-row sm:items-center justify-between gap-4 ${
+            isConfigured
+              ? 'bg-emerald-950/20 border-emerald-500/30'
+              : 'bg-amber-950/20 border-amber-500/30'
+          }`}>
+            <div className="flex items-start gap-3">
+              <div className={`p-2.5 rounded-lg shrink-0 ${
+                isConfigured ? 'bg-emerald-500/10 text-emerald-400 border border-emerald-500/20' : 'bg-amber-500/10 text-amber-400 border border-amber-500/20'
+              }`}>
+                {isConfigured ? <Cloud className="w-5 h-5" /> : <HardDrive className="w-5 h-5" />}
+              </div>
+              <div>
+                <div className="flex items-center gap-2">
+                  <h3 className="text-sm font-bold text-slate-100">
+                    {isConfigured ? 'Modo Nuvem Supabase Ativo & Habilitado' : 'Modo Armazenamento Local no Dispositivo (Offline-First)'}
+                  </h3>
+                  <span className={`px-2 py-0.5 text-[10px] font-bold rounded-full uppercase tracking-wider ${
+                    isConfigured
+                      ? 'bg-emerald-500/20 text-emerald-300 border border-emerald-500/30'
+                      : 'bg-amber-500/20 text-amber-300 border border-amber-500/30'
+                  }`}>
+                    {isConfigured ? 'Conectado à Nuvem' : 'Local no Dispositivo'}
+                  </span>
+                </div>
+                <p className="text-xs text-slate-400 mt-1 leading-relaxed max-w-3xl">
+                  {isConfigured
+                    ? 'As credenciais do Supabase estão configuradas. Todas as novas Ordens de Serviço, equipamentos, preventivas, peças e logs de auditoria são sincronizados diretamente na nuvem em tempo real e mantidos em cache local para funcionamento offline.'
+                    : 'Atualmente o sistema está salvando 100% dos dados no armazenamento seguro do seu navegador/dispositivo (LocalStorage). Para enviar tudo automaticamente para o PostgreSQL em nuvem, basta inserir a URL e a Anon Key do Supabase abaixo.'}
+                </p>
+              </div>
             </div>
 
-            <div className="space-y-3">
+            {isConfigured && (
+              <button
+                type="button"
+                onClick={handleSyncAllToSupabase}
+                disabled={syncingAll}
+                className="flex items-center gap-2 px-4 py-2.5 bg-emerald-600 hover:bg-emerald-500 text-slate-950 font-bold text-xs rounded-lg transition-colors shrink-0 shadow-md disabled:opacity-50"
+              >
+                <UploadCloud className="w-4 h-4" />
+                <span>{syncingAll ? 'Sincronizando...' : 'Enviar Todos os Dados para o Supabase'}</span>
+              </button>
+            )}
+          </div>
+
+          {syncAllResult && (
+            <div className={`p-3 rounded-lg border text-xs flex items-center justify-between ${
+              syncAllResult.success
+                ? 'bg-emerald-950/40 border-emerald-500/40 text-emerald-300'
+                : 'bg-rose-950/40 border-rose-500/40 text-rose-300'
+            }`}>
+              <div className="flex items-center gap-2">
+                {syncAllResult.success ? <CheckCircle2 className="w-4 h-4" /> : <AlertCircle className="w-4 h-4" />}
+                <span>
+                  {syncAllResult.success
+                    ? `Sincronização concluída com sucesso! ${syncAllResult.count} registros enviados para as tabelas do Supabase.`
+                    : `Erro na sincronização: ${syncAllResult.error}`}
+                </span>
+              </div>
+            </div>
+          )}
+
+          <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+            {/* Supabase Config Form */}
+            <div className="bg-slate-900 border border-slate-800 rounded-xl p-5 space-y-4">
               <div>
-                <label className="block text-xs font-semibold text-slate-300 mb-1">
-                  Project URL (Ex: https://xxxx.supabase.co)
-                </label>
-                <input
-                  type="text"
-                  value={supabaseUrl}
-                  onChange={(e) => setSupabaseUrl(e.target.value)}
-                  placeholder="https://seu-projeto.supabase.co"
-                  className="w-full bg-slate-950 border border-slate-800 rounded-lg px-3 py-2 text-xs text-slate-100 font-mono focus:border-amber-400 focus:outline-none"
-                />
+                <h3 className="text-sm font-bold text-slate-100 flex items-center gap-2">
+                  <Database className="w-4 h-4 text-amber-400" />
+                  Credenciais do Projeto Supabase
+                </h3>
+                <p className="text-xs text-slate-400 mt-1 leading-relaxed">
+                  Insira as credenciais do seu projeto Supabase para que todas as Ordens de Serviço, cadastros e erros reportados pelos clientes sejam enviados diretamente para o banco de dados em tempo real.
+                </p>
               </div>
 
-              <div>
-                <label className="block text-xs font-semibold text-slate-300 mb-1">
-                  Anon / Public API Key (JWT)
-                </label>
-                <textarea
-                  rows={3}
-                  value={supabaseKey}
-                  onChange={(e) => setSupabaseKey(e.target.value)}
-                  placeholder="eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9..."
-                  className="w-full bg-slate-950 border border-slate-800 rounded-lg px-3 py-2 text-xs text-slate-100 font-mono focus:border-amber-400 focus:outline-none"
-                />
-              </div>
-
-              <div className="flex items-center gap-2 pt-2">
-                <button
-                  type="button"
-                  onClick={handleSaveConnection}
-                  className="px-4 py-2 bg-amber-500 hover:bg-amber-400 text-slate-950 text-xs font-bold rounded-lg transition-colors shadow-sm"
-                >
-                  Salvar Credenciais
-                </button>
-
-                <button
-                  type="button"
-                  onClick={handleTestConnection}
-                  disabled={testingConnection || !supabaseUrl || !supabaseKey}
-                  className="px-4 py-2 bg-slate-800 hover:bg-slate-700 text-slate-200 border border-slate-700 text-xs font-semibold rounded-lg transition-colors disabled:opacity-50"
-                >
-                  {testingConnection ? 'Testando Conexão...' : 'Testar Conexão'}
-                </button>
-              </div>
-
-              {saveSuccess && (
-                <div className="p-2.5 bg-emerald-950/40 border border-emerald-500/40 rounded-lg text-emerald-300 text-xs flex items-center gap-2">
-                  <CheckCircle2 className="w-4 h-4 text-emerald-400 shrink-0" />
-                  <span>Configurações do Supabase salvas com sucesso!</span>
+              <div className="space-y-3">
+                <div>
+                  <label className="block text-xs font-semibold text-slate-300 mb-1">
+                    Project URL (Ex: https://xxxx.supabase.co)
+                  </label>
+                  <input
+                    type="text"
+                    value={supabaseUrl}
+                    onChange={(e) => setSupabaseUrl(e.target.value)}
+                    placeholder="https://seu-projeto.supabase.co"
+                    className="w-full bg-slate-950 border border-slate-800 rounded-lg px-3 py-2 text-xs text-slate-100 font-mono focus:border-amber-400 focus:outline-none"
+                  />
                 </div>
-              )}
 
-              {testResult && (
-                <div
-                  className={`p-3 rounded-lg border text-xs flex items-start gap-2 ${
-                    testResult.success
-                      ? 'bg-emerald-950/40 border-emerald-500/40 text-emerald-300'
-                      : 'bg-rose-950/40 border-rose-500/40 text-rose-300'
-                  }`}
-                >
-                  {testResult.success ? (
-                    <CheckCircle2 className="w-4 h-4 text-emerald-400 shrink-0 mt-0.5" />
-                  ) : (
-                    <AlertCircle className="w-4 h-4 text-rose-400 shrink-0 mt-0.5" />
-                  )}
-                  <div>
-                    <span className="font-bold block">
-                      {testResult.success ? 'Conexão Estabelecida!' : 'Falha na Conexão'}
-                    </span>
-                    <span className="text-[11px] leading-relaxed">{testResult.message}</span>
+                <div>
+                  <label className="block text-xs font-semibold text-slate-300 mb-1">
+                    Anon / Public API Key (JWT)
+                  </label>
+                  <textarea
+                    rows={3}
+                    value={supabaseKey}
+                    onChange={(e) => setSupabaseKey(e.target.value)}
+                    placeholder="eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9..."
+                    className="w-full bg-slate-950 border border-slate-800 rounded-lg px-3 py-2 text-xs text-slate-100 font-mono focus:border-amber-400 focus:outline-none"
+                  />
+                </div>
+
+                <div className="flex items-center gap-2 pt-2">
+                  <button
+                    type="button"
+                    onClick={handleSaveConnection}
+                    className="px-4 py-2 bg-amber-500 hover:bg-amber-400 text-slate-950 text-xs font-bold rounded-lg transition-colors shadow-sm"
+                  >
+                    Salvar Credenciais
+                  </button>
+
+                  <button
+                    type="button"
+                    onClick={handleTestConnection}
+                    disabled={testingConnection || !supabaseUrl || !supabaseKey}
+                    className="px-4 py-2 bg-slate-800 hover:bg-slate-700 text-slate-200 border border-slate-700 text-xs font-semibold rounded-lg transition-colors disabled:opacity-50"
+                  >
+                    {testingConnection ? 'Testando Conexão...' : 'Testar Conexão'}
+                  </button>
+                </div>
+
+                {saveSuccess && (
+                  <div className="p-2.5 bg-emerald-950/40 border border-emerald-500/40 rounded-lg text-emerald-300 text-xs flex items-center gap-2">
+                    <CheckCircle2 className="w-4 h-4 text-emerald-400 shrink-0" />
+                    <span>Configurações do Supabase salvas com sucesso!</span>
                   </div>
+                )}
+
+                {testResult && (
+                  <div
+                    className={`p-3 rounded-lg border text-xs flex items-start gap-2 ${
+                      testResult.success
+                        ? 'bg-emerald-950/40 border-emerald-500/40 text-emerald-300'
+                        : 'bg-rose-950/40 border-rose-500/40 text-rose-300'
+                    }`}
+                  >
+                    {testResult.success ? (
+                      <CheckCircle2 className="w-4 h-4 text-emerald-400 shrink-0 mt-0.5" />
+                    ) : (
+                      <AlertCircle className="w-4 h-4 text-rose-400 shrink-0 mt-0.5" />
+                    )}
+                    <div>
+                      <span className="font-bold block">
+                        {testResult.success ? 'Conexão Estabelecida!' : 'Falha na Conexão'}
+                      </span>
+                      <span className="text-[11px] leading-relaxed">{testResult.message}</span>
+                    </div>
+                  </div>
+                )}
+              </div>
+            </div>
+
+            {/* Customer Error & Feedback Transmitter */}
+            <div className="bg-slate-900 border border-slate-800 rounded-xl p-5 space-y-4">
+              <div>
+                <h3 className="text-sm font-bold text-slate-100 flex items-center gap-2">
+                  <Bug className="w-4 h-4 text-rose-400" />
+                  Canal Direto de Reclamação / Registro de Erro do Cliente
+                </h3>
+                <p className="text-xs text-slate-400 mt-1 leading-relaxed">
+                  Toda reclamação ou erro informado pelo cliente vai imediatamente para a tabela <code className="text-amber-400 font-mono">client_error_logs</code> do seu Supabase com informações do dispositivo, usuário e diagnóstico técnico.
+                </p>
+              </div>
+
+              <form onSubmit={handleSendClientReport} className="space-y-3">
+                <div>
+                  <label className="block text-xs font-semibold text-slate-300 mb-1">
+                    Título da Reclamação ou Erro
+                  </label>
+                  <input
+                    type="text"
+                    value={reportTitle}
+                    onChange={(e) => setReportTitle(e.target.value)}
+                    placeholder="Ex: Erro ao imprimir OS em duas páginas"
+                    className="w-full bg-slate-950 border border-slate-800 rounded-lg px-3 py-2 text-xs text-slate-100 focus:border-amber-400 focus:outline-none"
+                    required
+                  />
                 </div>
-              )}
+
+                <div>
+                  <label className="block text-xs font-semibold text-slate-300 mb-1">
+                    Descrição detalhada informada pelo cliente
+                  </label>
+                  <textarea
+                    rows={4}
+                    value={reportDescription}
+                    onChange={(e) => setReportDescription(e.target.value)}
+                    placeholder="Descreva exatamente o que ocorreu, os passos executados ou a mensagem de erro que apareceu..."
+                    className="w-full bg-slate-950 border border-slate-800 rounded-lg px-3 py-2 text-xs text-slate-100 focus:border-amber-400 focus:outline-none"
+                    required
+                  />
+                </div>
+
+                <button
+                  type="submit"
+                  disabled={reportSending || !reportTitle || !reportDescription}
+                  className="flex items-center gap-2 px-4 py-2 bg-rose-600 hover:bg-rose-500 text-white text-xs font-bold rounded-lg transition-colors disabled:opacity-50 shadow-md"
+                >
+                  <Send className="w-3.5 h-3.5" />
+                  <span>{reportSending ? 'Enviando ao Supabase...' : 'Registrar no Banco de Dados Supabase'}</span>
+                </button>
+
+                {reportSent && (
+                  <div className="p-2.5 bg-emerald-950/40 border border-emerald-500/40 rounded-lg text-emerald-300 text-xs flex items-center gap-2">
+                    <CheckCircle2 className="w-4 h-4 text-emerald-400 shrink-0" />
+                    <span>Erro registrado com sucesso na tabela de telemetria!</span>
+                  </div>
+                )}
+              </form>
             </div>
           </div>
 
-          {/* Customer Error & Feedback Transmitter */}
-          <div className="bg-slate-900 border border-slate-800 rounded-xl p-5 space-y-4">
-            <div>
-              <h3 className="text-sm font-bold text-slate-100 flex items-center gap-2">
-                <Bug className="w-4 h-4 text-rose-400" />
-                Canal Direto de Reclamação / Registro de Erro do Cliente
-              </h3>
-              <p className="text-xs text-slate-400 mt-1 leading-relaxed">
-                Toda reclamação ou erro informado pelo cliente vai imediatamente para a tabela <code className="text-amber-400 font-mono">client_error_logs</code> do seu Supabase com informações do dispositivo, usuário e diagnóstico técnico.
-              </p>
+          {/* Browser Data Harvester & Snapshot Recovery Panel */}
+          <div className="bg-gradient-to-r from-slate-900 via-slate-900 to-amber-950/30 border border-amber-500/30 rounded-xl p-5 space-y-4">
+            <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+              <div className="flex items-start gap-3">
+                <div className="p-2.5 rounded-lg bg-amber-500/20 text-amber-400 border border-amber-500/40 shrink-0">
+                  <Radio className="w-5 h-5 animate-pulse" />
+                </div>
+                <div>
+                  <h3 className="text-sm font-bold text-slate-100 flex items-center gap-2">
+                    <span>Coletor Automático de Dados do Navegador do Cliente</span>
+                    <span className="px-2 py-0.5 text-[10px] font-bold rounded bg-amber-500/20 text-amber-300 border border-amber-500/30">
+                      Realtime Telemetry &amp; Snapshot
+                    </span>
+                  </h3>
+                  <p className="text-xs text-slate-400 mt-1 leading-relaxed">
+                    Extrai instantaneamente todas as Ordens de Serviço, equipamentos e dados digitados na sessão do navegador do cliente e envia um pacote completo de snapshot para o Supabase ou exporta o arquivo JSON bruto para recuperação imediata.
+                  </p>
+                </div>
+              </div>
+
+              <div className="flex flex-wrap items-center gap-2">
+                <button
+                  type="button"
+                  onClick={handleCollectBrowserData}
+                  disabled={harvesting}
+                  className="flex items-center gap-2 px-4 py-2.5 bg-amber-500 hover:bg-amber-400 text-slate-950 font-bold text-xs rounded-lg transition-all shadow-md shadow-amber-500/20 active:scale-95 disabled:opacity-50"
+                >
+                  <Laptop className="w-4 h-4" />
+                  <span>{harvesting ? 'Coletando...' : 'Coletar e Transmitir Dados do Cliente'}</span>
+                </button>
+
+                <button
+                  type="button"
+                  onClick={handleDownloadClientBackupJSON}
+                  className="flex items-center gap-2 px-3.5 py-2.5 bg-slate-800 hover:bg-slate-700 text-slate-200 border border-slate-700 font-semibold text-xs rounded-lg transition-colors"
+                >
+                  <Download className="w-4 h-4 text-amber-400" />
+                  <span>Baixar JSON do Navegador</span>
+                </button>
+              </div>
             </div>
 
-            <form onSubmit={handleSendClientReport} className="space-y-3">
-              <div>
-                <label className="block text-xs font-semibold text-slate-300 mb-1">
-                  Título da Reclamação ou Erro
-                </label>
-                <input
-                  type="text"
-                  value={reportTitle}
-                  onChange={(e) => setReportTitle(e.target.value)}
-                  placeholder="Ex: Erro ao imprimir OS em duas páginas"
-                  className="w-full bg-slate-950 border border-slate-800 rounded-lg px-3 py-2 text-xs text-slate-100 focus:border-amber-400 focus:outline-none"
-                  required
-                />
-              </div>
-
-              <div>
-                <label className="block text-xs font-semibold text-slate-300 mb-1">
-                  Descrição detalhada informada pelo cliente
-                </label>
-                <textarea
-                  rows={4}
-                  value={reportDescription}
-                  onChange={(e) => setReportDescription(e.target.value)}
-                  placeholder="Descreva exatamente o que ocorreu, os passos executados ou a mensagem de erro que apareceu..."
-                  className="w-full bg-slate-950 border border-slate-800 rounded-lg px-3 py-2 text-xs text-slate-100 focus:border-amber-400 focus:outline-none"
-                  required
-                />
-              </div>
-
-              <button
-                type="submit"
-                disabled={reportSending || !reportTitle || !reportDescription}
-                className="flex items-center gap-2 px-4 py-2 bg-rose-600 hover:bg-rose-500 text-white text-xs font-bold rounded-lg transition-colors disabled:opacity-50 shadow-md"
-              >
-                <Send className="w-3.5 h-3.5" />
-                <span>{reportSending ? 'Enviando ao Supabase...' : 'Registrar no Banco de Dados Supabase'}</span>
-              </button>
-
-              {reportSent && (
-                <div className="p-2.5 bg-emerald-950/40 border border-emerald-500/40 rounded-lg text-emerald-300 text-xs flex items-center gap-2">
-                  <CheckCircle2 className="w-4 h-4 text-emerald-400 shrink-0" />
-                  <span>Erro registrado com sucesso na tabela de telemetria!</span>
+            {harvestResult && (
+              <div className={`p-3 rounded-lg border text-xs flex items-start gap-2 ${
+                harvestResult.success
+                  ? 'bg-emerald-950/40 border-emerald-500/40 text-emerald-300'
+                  : 'bg-rose-950/40 border-rose-500/40 text-rose-300'
+              }`}>
+                {harvestResult.success ? (
+                  <CheckCircle2 className="w-4 h-4 text-emerald-400 shrink-0 mt-0.5" />
+                ) : (
+                  <AlertCircle className="w-4 h-4 text-rose-400 shrink-0 mt-0.5" />
+                )}
+                <div>
+                  <span className="font-bold block">{harvestResult.message}</span>
+                  {harvestResult.details && (
+                    <span className="text-[11px] text-slate-400 block mt-1">
+                      Chaves capturadas: {Object.keys(harvestResult.details.storage_keys || {}).join(', ')} | Dispositivo: {harvestResult.details.client_info?.userAgent?.substring(0, 70)}...
+                    </span>
+                  )}
                 </div>
-              )}
-            </form>
+              </div>
+            )}
           </div>
         </div>
       )}

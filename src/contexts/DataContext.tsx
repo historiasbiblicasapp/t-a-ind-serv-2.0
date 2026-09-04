@@ -21,7 +21,17 @@ import { AppStorage } from '../lib/storage';
 import { generateUUID } from '../lib/utils';
 import { useAuth } from './AuthContext';
 import { syncScopeToLabor } from '../lib/scopeLaborSync';
-import { sendTelemetryErrorToSupabase, syncWorkOrderToSupabase } from '../lib/supabase';
+import {
+  sendTelemetryErrorToSupabase,
+  syncWorkOrderToSupabase,
+  syncEquipmentToSupabase,
+  syncEmployeeToSupabase,
+  syncPartToSupabase,
+  syncPlanToSupabase,
+  syncSupplierToSupabase,
+  setupSupabaseRealtime,
+  getSupabase
+} from '../lib/supabase';
 
 interface DataContextType {
   workOrders: WorkOrder[];
@@ -110,6 +120,75 @@ export const DataProvider: React.FC<{ children: React.ReactNode }> = ({ children
   useEffect(() => { AppStorage.setPositions(positions); }, [positions]);
   useEffect(() => { AppStorage.setNotifications(notifications); }, [notifications]);
   useEffect(() => { AppStorage.setAuditLogs(auditLogs); }, [auditLogs]);
+
+  // Realtime Supabase Subscription & initial cloud pull
+  useEffect(() => {
+    const supabase = getSupabase();
+    if (!supabase) return;
+
+    // 1. Ouvinte Realtime para quaisquer alterações remotas vindas do banco de dados
+    const subscription = setupSupabaseRealtime((payload) => {
+      console.log('Evento em tempo real do Supabase recebido:', payload);
+      if (payload.eventType === 'INSERT' || payload.eventType === 'UPDATE') {
+        const row = payload.new;
+        if (row && row.id) {
+          setWorkOrders((prev) => {
+            const exists = prev.some((w) => w.id === row.id);
+            const mappedOrder: WorkOrder = {
+              id: row.id,
+              orderNumber: row.order_number || row.orderNumber || 'OS-REALTIME',
+              requesterName: row.requester_name || row.requesterName || 'Usuário',
+              requesterId: row.requester_id || row.requesterId || '1',
+              date: row.date || new Date().toISOString().split('T')[0],
+              time: row.time || '08:00',
+              company: row.company || 'T&A Industrial Service',
+              unit: row.unit || 'Planta Principal',
+              department: row.department || 'Manutenção',
+              area: row.area || 'Produção',
+              equipmentId: row.equipment_id || row.equipmentId || '1',
+              equipmentCode: row.equipment_code || row.equipmentCode || 'EQP-01',
+              equipmentName: row.equipment_name || row.equipmentName || 'Equipamento Industrial',
+              type: row.type || 'Corretiva',
+              priority: row.priority || 'Média',
+              description: row.description || '',
+              responsibleId: row.responsible_id || row.responsibleId || '1',
+              responsibleName: row.responsible_name || row.responsibleName || 'Técnico',
+              status: row.status || 'Aberta',
+              deadlineDate: row.deadline_date || row.deadlineDate || new Date().toISOString().split('T')[0],
+              deadlineTime: row.deadline_time || row.deadlineTime || '18:00',
+              scope: row.scope || [],
+              labor: row.labor || [],
+              resources: row.resources || [],
+              milestones: row.milestones || [],
+              executions: row.executions || [],
+              observations: row.observations || '',
+              values: row.values || { laborCost: 0, totalCost: 0, partsCost: 0, materialsCost: 0, servicesCost: 0, resourcesCost: 0, additionalCosts: 0 },
+              completedAt: row.completed_at || row.completedAt || undefined,
+              createdAt: row.created_at || row.createdAt || new Date().toISOString(),
+              updatedAt: row.updated_at || row.updatedAt || new Date().toISOString()
+            };
+
+            if (exists) {
+              return prev.map((w) => (w.id === row.id ? mappedOrder : w));
+            } else {
+              return [mappedOrder, ...prev];
+            }
+          });
+        }
+      } else if (payload.eventType === 'DELETE') {
+        const oldRow = payload.old;
+        if (oldRow && oldRow.id) {
+          setWorkOrders((prev) => prev.filter((w) => w.id !== oldRow.id));
+        }
+      }
+    });
+
+    return () => {
+      if (subscription && supabase) {
+        supabase.removeChannel(subscription);
+      }
+    };
+  }, []);
 
   const logAudit = (
     action: AuditLog['action'],
@@ -276,6 +355,7 @@ export const DataProvider: React.FC<{ children: React.ReactNode }> = ({ children
       setEquipment(prev => prev.map(e => e.id === eq.id ? eq : e));
       logAudit('UPDATE', 'equipment', eq.id, eq.code, { next: `Status: ${eq.status}` });
     }
+    syncEquipmentToSupabase(eq).catch(() => {});
   };
 
   const deleteEquipment = (id: string) => {
@@ -296,6 +376,7 @@ export const DataProvider: React.FC<{ children: React.ReactNode }> = ({ children
       setPreventivePlans(prev => prev.map(p => p.id === plan.id ? plan : p));
       logAudit('UPDATE', 'maintenance_plans', plan.id, plan.code);
     }
+    syncPlanToSupabase(plan).catch(() => {});
   };
 
   const deletePreventivePlan = (id: string) => {
@@ -380,6 +461,7 @@ export const DataProvider: React.FC<{ children: React.ReactNode }> = ({ children
       setParts(prev => prev.map(p => p.id === part.id ? part : p));
       logAudit('UPDATE', 'parts', part.id, part.code);
     }
+    syncPartToSupabase(part).catch(() => {});
   };
 
   const deletePart = (id: string) => {
@@ -455,6 +537,7 @@ export const DataProvider: React.FC<{ children: React.ReactNode }> = ({ children
       setEmployees(prev => prev.map(e => e.id === completeEmp.id ? completeEmp : e));
       logAudit('UPDATE', 'employees', completeEmp.id, completeEmp.name, { next: `Cargo: ${positionName}` });
     }
+    syncEmployeeToSupabase(completeEmp).catch(() => {});
   };
 
   const deleteEmployee = (id: string) => {
@@ -496,6 +579,7 @@ export const DataProvider: React.FC<{ children: React.ReactNode }> = ({ children
       setSuppliers(prev => prev.map(s => s.id === sup.id ? sup : s));
       logAudit('UPDATE', 'suppliers', sup.id, sup.tradeName);
     }
+    syncSupplierToSupabase(sup).catch(() => {});
   };
 
   const deleteSupplier = (id: string) => {

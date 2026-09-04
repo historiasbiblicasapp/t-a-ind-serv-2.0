@@ -52,14 +52,14 @@ export const Modal: React.FC<ModalProps> = ({
   return (
     <AnimatePresence>
       {isOpen && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 sm:p-6 overflow-y-auto">
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 sm:p-6 overflow-y-auto print:static print:inset-auto print:p-0 print:m-0 print:block print:overflow-visible print:w-full print:h-auto print:max-h-none">
           {/* Backdrop */}
           <motion.div
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
             exit={{ opacity: 0 }}
             onClick={onClose}
-            className="fixed inset-0 bg-slate-950/80 backdrop-blur-sm no-print"
+            className="fixed inset-0 bg-slate-950/80 backdrop-blur-sm no-print print:hidden !print:hidden"
           />
 
           {/* Modal Content */}
@@ -68,10 +68,10 @@ export const Modal: React.FC<ModalProps> = ({
             animate={{ opacity: 1, scale: 1, y: 0 }}
             exit={{ opacity: 0, scale: 0.96, y: 10 }}
             transition={{ duration: 0.18 }}
-            className={`relative w-full ${maxWidthClass} bg-slate-900 border border-slate-800 rounded-xl shadow-2xl overflow-hidden my-8 z-10 flex flex-col max-h-[90vh] print:m-0 print:p-0 print:border-none print:shadow-none print:bg-white print:max-h-none print:h-auto print:static print:w-full print:max-w-full`}
+            className={`relative w-full ${maxWidthClass} bg-slate-900 border border-slate-800 rounded-xl shadow-2xl overflow-hidden my-8 z-10 flex flex-col max-h-[90vh] print:m-0 print:p-0 print:border-none print:shadow-none print:rounded-none print:bg-white print:max-h-none print:h-auto print:static print:w-full print:max-w-full print:transform-none`}
           >
             {/* Header */}
-            <div className="flex items-center justify-between px-6 py-4 border-b border-slate-800 bg-slate-900/90 sticky top-0 z-20 no-print">
+            <div className="flex items-center justify-between px-6 py-4 border-b border-slate-800 bg-slate-900/90 sticky top-0 z-20 no-print print:hidden !print:hidden">
               <div className="flex items-center gap-3">
                 {icon && (
                   <div className="p-2 rounded-lg bg-amber-500/10 text-amber-400 border border-amber-500/20">
@@ -89,7 +89,7 @@ export const Modal: React.FC<ModalProps> = ({
                 <button
                   id="modal-close-btn"
                   onClick={onClose}
-                  className="p-1.5 text-slate-400 hover:text-slate-100 hover:bg-slate-800 rounded-lg transition-colors"
+                  className="p-1.5 text-slate-400 hover:text-slate-100 hover:bg-slate-800 rounded-lg transition-colors no-print print:hidden"
                   title="Fechar (ESC)"
                 >
                   <X className="w-5 h-5" />

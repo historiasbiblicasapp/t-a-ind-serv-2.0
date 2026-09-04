@@ -196,19 +196,43 @@ export const LoginView: React.FC = () => {
           {/* Quick Demo Selectors */}
           <div className="mt-6 pt-5 border-t border-slate-800">
             <p className="text-[11px] font-semibold text-slate-400 uppercase tracking-wider text-center mb-3">
-              Perfis Rápidos de Demonstração
+              Acesso Rápido com 1 Clique
             </p>
             <div className="grid grid-cols-2 gap-2">
+              <button
+                type="button"
+                onClick={() => handleSelectQuickUser('gestor.admin@tsindustrial.com', 'admin')}
+                className="p-2 rounded-lg bg-amber-500/10 hover:bg-amber-500/20 border border-amber-500/30 text-left transition-all group"
+              >
+                <div className="flex items-center gap-1.5">
+                  <UserCheck className="w-3.5 h-3.5 text-amber-400" />
+                  <span className="text-xs font-bold text-amber-300 group-hover:text-amber-200">Novo Admin</span>
+                </div>
+                <span className="text-[10px] text-slate-300 block truncate">gestor.admin@ts...</span>
+              </button>
+
+              <button
+                type="button"
+                onClick={() => handleSelectQuickUser('microwasmel@gmail.com', 'admin')}
+                className="p-2 rounded-lg bg-slate-800/60 hover:bg-slate-800 border border-slate-700/60 text-left transition-all group"
+              >
+                <div className="flex items-center gap-1.5">
+                  <ShieldCheck className="w-3.5 h-3.5 text-amber-400" />
+                  <span className="text-xs font-bold text-slate-200 group-hover:text-amber-400">Admin Master</span>
+                </div>
+                <span className="text-[10px] text-slate-400 block truncate">microwasmel@...</span>
+              </button>
+
               <button
                 type="button"
                 onClick={() => handleSelectQuickUser('admin@tsindustrial.com', 'admin')}
                 className="p-2 rounded-lg bg-slate-800/60 hover:bg-slate-800 border border-slate-700/60 text-left transition-all group"
               >
                 <div className="flex items-center gap-1.5">
-                  <UserCheck className="w-3.5 h-3.5 text-amber-400" />
-                  <span className="text-xs font-bold text-slate-200 group-hover:text-amber-400">Administrador</span>
+                  <UserCheck className="w-3.5 h-3.5 text-slate-400" />
+                  <span className="text-xs font-bold text-slate-200 group-hover:text-amber-400">Carlos Ferreira</span>
                 </div>
-                <span className="text-[10px] text-slate-400 block truncate">Carlos Ferreira</span>
+                <span className="text-[10px] text-slate-400 block truncate">admin@tsindustrial...</span>
               </button>
 
               <button
@@ -221,30 +245,6 @@ export const LoginView: React.FC = () => {
                   <span className="text-xs font-bold text-slate-200 group-hover:text-blue-400">Gerente</span>
                 </div>
                 <span className="text-[10px] text-slate-400 block truncate">Eduardo Martins</span>
-              </button>
-
-              <button
-                type="button"
-                onClick={() => handleSelectQuickUser('joao.silva@tsindustrial.com', 'tecnico')}
-                className="p-2 rounded-lg bg-slate-800/60 hover:bg-slate-800 border border-slate-700/60 text-left transition-all group"
-              >
-                <div className="flex items-center gap-1.5">
-                  <Wrench className="w-3.5 h-3.5 text-emerald-400" />
-                  <span className="text-xs font-bold text-slate-200 group-hover:text-emerald-400">Técnico</span>
-                </div>
-                <span className="text-[10px] text-slate-400 block truncate">João da Silva</span>
-              </button>
-
-              <button
-                type="button"
-                onClick={() => handleSelectQuickUser('pcm@tsindustrial.com', 'pcm')}
-                className="p-2 rounded-lg bg-slate-800/60 hover:bg-slate-800 border border-slate-700/60 text-left transition-all group"
-              >
-                <div className="flex items-center gap-1.5">
-                  <HardHat className="w-3.5 h-3.5 text-purple-400" />
-                  <span className="text-xs font-bold text-slate-200 group-hover:text-purple-400">PCM</span>
-                </div>
-                <span className="text-[10px] text-slate-400 block truncate">Amanda V.</span>
               </button>
             </div>
           </div>

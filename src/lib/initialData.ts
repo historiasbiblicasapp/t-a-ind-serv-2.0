@@ -216,6 +216,20 @@ export const INITIAL_USERS: User[] = [
     createdAt: '2025-01-01T00:00:00Z'
   },
   {
+    id: 'user-admin-2',
+    name: 'Gestor de Manutenção & Operações',
+    email: 'gestor.admin@tsindustrial.com',
+    password: 'admin',
+    phone: '(47) 99111-2244',
+    role: 'Administrador',
+    company: 'T&A Industrial Service Ltda.',
+    unit: 'Planta Principal - Joinville',
+    department: 'Supervisão Geral de Manutenção',
+    status: 'Ativo',
+    isMaster: false,
+    createdAt: '2025-01-01T00:00:00Z'
+  },
+  {
     id: 'user-admin',
     name: 'Carlos Alberto Ferreira',
     email: 'admin@tsindustrial.com',

@@ -106,6 +106,7 @@ const MainAppContent: React.FC = () => {
         {/* Top Header */}
         <Header
           currentPage={currentPage}
+          onNavigate={(page) => setCurrentPage(page as PageId)}
           onToggleSidebar={() => setIsSidebarOpen(!isSidebarOpen)}
           onOpenNewWorkOrder={() => setIsNewOrderModalOpen(true)}
           onOpenQRScanner={() => setIsQRScannerOpen(true)}

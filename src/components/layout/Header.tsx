@@ -14,7 +14,9 @@ import {
   Wifi,
   WifiOff,
   User as UserIcon,
-  ChevronDown
+  ChevronDown,
+  RefreshCw,
+  Database
 } from 'lucide-react';
 import { useAuth } from '../../contexts/AuthContext';
 import { useData } from '../../contexts/DataContext';
@@ -23,22 +25,23 @@ import { PageId } from './Sidebar';
 import { formatDateTime } from '../../lib/utils';
 import { WorkOrder } from '../../types';
 import { BrandIcon } from '../common/BrandLogo';
+import { getSupabaseConfig, syncAllEntitiesToSupabase } from '../../lib/supabase';
 
 interface HeaderProps {
   onToggleSidebar?: () => void;
   onOpenSidebar?: () => void;
-  onNavigate?: (page: PageId) => void;
+  onNavigate?: (page: string) => void;
   onOpenNewOS?: () => void;
   onOpenNewWorkOrder?: () => void;
   onOpenQRScanner?: () => void;
   onSelectWorkOrder?: (order: WorkOrder) => void;
-  currentPage?: PageId;
+  currentPage?: string;
 }
 
 export const Header: React.FC<HeaderProps> = ({
   onToggleSidebar,
   onOpenSidebar,
-  onNavigate = () => {},
+  onNavigate,
   onOpenNewOS,
   onOpenNewWorkOrder,
   onOpenQRScanner = () => {},
@@ -46,13 +49,44 @@ export const Header: React.FC<HeaderProps> = ({
 }) => {
   const handleToggle = onToggleSidebar || onOpenSidebar || (() => {});
   const handleNewOS = onOpenNewWorkOrder || onOpenNewOS || (() => {});
+  const handleNavigate = onNavigate || ((_: any) => {});
 
   const { currentUser, can, logout, switchUser, users } = useAuth();
-  const { notifications, markNotificationRead, markAllNotificationsRead } = useData();
+  const { notifications, markNotificationRead, markAllNotificationsRead, workOrders, equipment, employees, parts, preventivePlans, suppliers } = useData();
   const { isOnline, isInstallable, installApp } = usePWA();
 
   const [showNotifications, setShowNotifications] = useState(false);
   const [showUserMenu, setShowUserMenu] = useState(false);
+  const [headerSyncing, setHeaderSyncing] = useState(false);
+  const [headerSyncSuccess, setHeaderSyncSuccess] = useState<boolean | null>(null);
+
+  const supabaseConfig = getSupabaseConfig();
+
+  const handleHeaderQuickSync = async () => {
+    if (!supabaseConfig.isConfigured) {
+      handleNavigate('settings');
+      return;
+    }
+    setHeaderSyncing(true);
+    setHeaderSyncSuccess(null);
+    try {
+      const res = await syncAllEntitiesToSupabase({
+        workOrders,
+        equipment,
+        employees,
+        parts,
+        preventivePlans,
+        suppliers
+      });
+      setHeaderSyncSuccess(res.success);
+      setTimeout(() => setHeaderSyncSuccess(null), 3000);
+    } catch {
+      setHeaderSyncSuccess(false);
+      setTimeout(() => setHeaderSyncSuccess(null), 3000);
+    } finally {
+      setHeaderSyncing(false);
+    }
+  };
 
   const unreadCount = notifications.filter(n => !n.read).length;
 
@@ -117,6 +151,36 @@ export const Header: React.FC<HeaderProps> = ({
             {isOnline ? <Wifi className="w-3.5 h-3.5" /> : <WifiOff className="w-3.5 h-3.5" />}
             <span className="hidden lg:inline">{isOnline ? 'Online' : 'Offline'}</span>
           </div>
+
+          {/* Supabase Cloud Sync Quick Button */}
+          <button
+            id="header-supabase-sync-btn"
+            onClick={handleHeaderQuickSync}
+            disabled={headerSyncing}
+            className={`flex items-center gap-1.5 px-2.5 py-1.5 rounded-lg text-xs font-semibold border transition-all ${
+              headerSyncSuccess === true
+                ? 'bg-emerald-500/20 text-emerald-300 border-emerald-500/40'
+                : headerSyncSuccess === false
+                ? 'bg-rose-500/20 text-rose-300 border-rose-500/40'
+                : supabaseConfig.isConfigured
+                ? 'bg-slate-800 hover:bg-slate-700 text-slate-200 border-slate-700'
+                : 'bg-amber-500/10 hover:bg-amber-500/20 text-amber-300 border-amber-500/30'
+            }`}
+            title={supabaseConfig.isConfigured ? 'Sincronizar dados em tempo real com Supabase' : 'Configurar Supabase Cloud'}
+          >
+            <Database className={`w-3.5 h-3.5 ${headerSyncing ? 'animate-spin text-amber-400' : 'text-amber-400'}`} />
+            <span className="hidden lg:inline">
+              {headerSyncing
+                ? 'Sincronizando...'
+                : headerSyncSuccess === true
+                ? 'Sincronizado!'
+                : headerSyncSuccess === false
+                ? 'Erro no Sync'
+                : supabaseConfig.isConfigured
+                ? 'Nuvem Realtime'
+                : 'Configurar Nuvem'}
+            </span>
+          </button>
 
           {/* PWA Install Button in Header */}
           {isInstallable && (
